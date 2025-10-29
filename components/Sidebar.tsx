@@ -3,6 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 // Dummy data
 const dummyProjects = [
@@ -23,13 +31,14 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'fixed top-[10px] left-[10px]',
+        'fixed top-2.5 left-2.5',
         'w-[250px] h-[calc(100vh-20px)]',
         'bg-secondary',
         'rounded-lg',
         'overflow-y-auto',
         'shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)]',
-        'dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'
+        'dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
+        'flex flex-col justify-between'
       )}
     >
       <div className='p-4'>
@@ -147,6 +156,33 @@ export function Sidebar() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <div className='px-4 mb-3'>
+        <div className='px-3 py-2 bg-background rounded-lg'>
+          <div
+            className={cn(
+              'px-3 py-1 rounded-lg text-sm font-medium',
+              'bg-primary text-primary-foreground',
+              'shadow-md shadow-primary/20 button-highlighted-shadow',
+              'hover:bg-primary/90',
+              'transition-colors duration-200 cursor-pointer'
+            )}
+          >
+            <Dialog>
+              <DialogTrigger>Login</DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your account and remove your data from our servers.
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
