@@ -2,6 +2,7 @@
 
 import { ThemeToggle } from '../components/ThemeToggle';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -26,23 +27,25 @@ export default function Home() {
               <h1 className='font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-foreground mx-auto'>
                 Transform Chats into
                 <br></br>
-                <span className='text-primary'> Actionable Insights</span>
+                <span className='text-primary '> Actionable Insights</span>
               </h1>
               <p className='text-sm md:text-base leading-relaxed mb-6 text-muted-foreground max-w-xl mx-auto'>
                 Turn messy chats into structured insights. Hide what matters,
                 extract tasks, create summaries, and share with your team.
               </p>
-              <button
-                className={cn(
-                  'px-6 py-2.5 rounded-lg text-sm font-medium',
-                  'bg-primary text-primary-foreground',
-                  'shadow-md shadow-primary/20 button-highlighted-shadow',
-                  'hover:bg-primary/90',
-                  'transition-colors duration-200'
-                )}
-              >
-                Get Started
-              </button>
+              <Link href='/dashboard'>
+                <button
+                  className={cn(
+                    'px-6 py-2.5 rounded-lg text-sm font-medium',
+                    'bg-primary text-primary-foreground',
+                    'shadow-md shadow-primary/20 button-highlighted-shadow',
+                    'hover:bg-primary/90',
+                    'transition-colors duration-200 cursor-pointer'
+                  )}
+                >
+                  Get Started
+                </button>
+              </Link>
             </div>
           </div>
 
