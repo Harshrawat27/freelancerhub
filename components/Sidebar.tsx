@@ -51,8 +51,8 @@ export function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm',
                 pathname === '/dashboard'
-                  ? 'bg-background/10 text-foreground opacity-100'
-                  : 'text-muted-foreground opacity-50 hover:bg-background/10 hover:opacity-100'
+                  ? 'bg-background text-foreground opacity-100'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
             >
               <svg
@@ -76,8 +76,8 @@ export function Sidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm',
                 pathname === '/projects'
-                  ? 'bg-background/10 text-foreground opacity-100'
-                  : 'text-muted-foreground opacity-50 hover:bg-background/10 hover:opacity-100'
+                  ? 'bg-background text-foreground opacity-100'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
             >
               <svg
@@ -107,7 +107,7 @@ export function Sidebar() {
             {dummyProjects.map((project) => (
               <div
                 key={project.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background/10 transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
+                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
               >
                 <div
                   className='w-3 h-3 rounded-full shrink-0'
@@ -130,7 +130,7 @@ export function Sidebar() {
             {dummyMembers.map((member) => (
               <div
                 key={member.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background/10 transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
+                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
               >
                 <div className='w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0'>
                   <span className='text-xs font-medium text-primary'>
