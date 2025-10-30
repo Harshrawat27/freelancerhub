@@ -45,7 +45,7 @@ export function Sidebar() {
     >
       <div className='p-4'>
         {/* Logo/Brand */}
-        <div className='mb-6 pb-4 border-b border-border'>
+        <div className='mb-6 pb-4 border-b border-dashed border-border'>
           <h2 className='font-heading text-xl font-bold text-foreground'>
             ChatFlow
           </h2>
