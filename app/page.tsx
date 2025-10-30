@@ -29,14 +29,14 @@ export default function Home() {
               src='/black-bg.webp'
               alt='Dark mode background'
               fill
-              className='object-cover z-0 dark:z-1'
+              className='object-cover z-0 dark:z-[1]'
               priority
             />
             <Image
               src='/white-bg.webp'
               alt='Light mode background'
               fill
-              className='object-cover z-1 dark:z-0'
+              className='object-cover z-[1] dark:z-0'
               priority
             />
 
