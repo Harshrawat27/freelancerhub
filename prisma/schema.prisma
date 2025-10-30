@@ -74,3 +74,29 @@ model Verification {
 
   @@map("verification")
 }
+
+model Client {
+  id             String   @id @default(cuid())
+  clientName     String
+  clientImage    String?
+  companyName    String
+  companyAddress String?
+  companyLogo    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("client")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  photo     String?
+  bio       String?
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("team_member")
+}
