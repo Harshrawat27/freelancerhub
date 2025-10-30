@@ -171,7 +171,7 @@ export function Sidebar() {
             </p>
             <div
               className={cn(
-                'px-3 py-1 rounded-lg text-sm font-medium',
+                'rounded-lg text-sm font-medium',
                 'bg-primary text-primary-foreground',
                 'shadow-md shadow-primary/20 button-highlighted-shadow',
                 'hover:bg-primary/90',
@@ -179,7 +179,9 @@ export function Sidebar() {
               )}
             >
               <Dialog>
-                <DialogTrigger>Login</DialogTrigger>
+                <DialogTrigger className='px-3 py-1 cursor-pointer'>
+                  Login
+                </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Welcome Back!!</DialogTitle>
