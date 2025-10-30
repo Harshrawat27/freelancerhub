@@ -9,7 +9,9 @@ export default function Dashboard() {
       <Sidebar />
       <main className='ml-[270px] p-6'>
         <Topbar pageName='Dashboard' />
-        <p className='text-muted-foreground mt-2'>Welcome to your dashboard</p>
+        <p className='text-muted-foreground mt-2'>
+          Welcome to your dashboard!!
+        </p>
       </main>
     </div>
   );
