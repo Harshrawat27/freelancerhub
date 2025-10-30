@@ -27,16 +27,16 @@ export default function Home() {
             {/* Background Images */}
             <Image
               src='/black-bg.png'
-              alt='Light mode background'
+              alt='Dark mode background'
               fill
-              className='object-cover dark:hidden'
+              className='object-cover z-0 dark:z-1'
               priority
             />
             <Image
               src='/white-bg.png'
-              alt='Dark mode background'
+              alt='Light mode background'
               fill
-              className='object-cover hidden dark:block'
+              className='object-cover z-1 dark:z-0'
               priority
             />
 
