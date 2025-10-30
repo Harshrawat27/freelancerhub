@@ -200,7 +200,7 @@ export function Sidebar() {
                       'border border-gray-300',
                       'hover:bg-gray-50',
                       'transition-colors duration-200',
-                      'font-medium text-sm'
+                      'font-medium text-sm cursor-pointer'
                     )}
                   >
                     <svg
