@@ -25,25 +25,22 @@ export default function Home() {
           {/* Hero */}
           <div className='px-4 md:px-8 pt-45 pb-31 md:pt-45 md:pb-31 relative overflow-hidden'>
             {/* Background Images */}
-            <div className='absolute w-full height-full left-0 right-0 top-0 bottom-0'>
-              <Image
-                src='/black-bg.webp'
-                alt='Dark mode background'
-                // fill
-                fill
-                style={{ objectFit: 'cover' }} // Or 'contain' depending on desired behavior
-                sizes='100vw'
-                loading='lazy'
-              />
-            </div>
-
-            {/* <Image
-              src='https://cdn.prod.website-files.com/66b995a8da9c768e10e66aed/6903a78a16f2bfd19b19c5ff_background-01.webp'
+            <Image
+              src='/black-bg.webp'
+              alt='Dark mode background'
+              width={1050}
+              height={1050}
+              className='object-cover opacity-70 absolute left-0 right-0 top-0 bottom-0'
+              priority
+            />
+            <Image
+              src='/white-bg.webp'
               alt='Light mode background'
-              fill
-              className='object-cover opacity-70'
-              loading='lazy'
-            /> */}
+              width={1050}
+              height={1050}
+              className='object-cover opacity-70 absolute left-0 right-0 top-0 bottom-0'
+              priority
+            />
 
             <div className='max-w-3xl text-center mx-auto relative z-10'>
               <h1 className='font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-foreground mx-auto'>
