@@ -16,7 +16,7 @@ datasource db {
 
 
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
   emailVerified Boolean
@@ -25,6 +25,8 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+  clients       Client[]
+  teamMembers   TeamMember[]
 
   @@unique([email])
   @@map("user")
@@ -82,6 +84,8 @@ model Client {
   companyName    String
   companyAddress String?
   companyLogo    String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -95,6 +99,8 @@ model TeamMember {
   photo     String?
   bio       String?
   role      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

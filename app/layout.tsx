@@ -3,6 +3,7 @@ import { Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { cn } from '@/lib/utils';
+import { Toaster } from '@/components/ui/sonner';
 
 const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
@@ -41,6 +42,8 @@ export default function RootLayout({
           attribute='class'
           enableSystem={false}
         >
+          <Toaster />
+
           {children}
         </ThemeProvider>
       </body>
