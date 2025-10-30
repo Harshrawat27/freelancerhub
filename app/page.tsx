@@ -33,7 +33,7 @@ export default function Home() {
                 fill
                 style={{ objectFit: 'cover' }} // Or 'contain' depending on desired behavior
                 sizes='100vw'
-                priority
+                loading='lazy'
               />
             </div>
 
