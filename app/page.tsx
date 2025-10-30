@@ -28,7 +28,9 @@ export default function Home() {
             <Image
               src='/black-bg.webp'
               alt='Dark mode background'
-              fill
+              // fill
+              width={1000}
+              height={1000}
               className='object-cover opacity-70'
               priority={true}
               sizes='100vw'
