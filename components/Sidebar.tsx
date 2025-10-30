@@ -165,8 +165,10 @@ export function Sidebar() {
       {!session.data ? (
         <div className='px-4 mb-3'>
           <div className='px-3 py-3 bg-background rounded-lg'>
-            <h2 className='text-white text-xl font-heading mb-1'>Login</h2>
-            <p className='mb-4 text-xs'>
+            <h2 className='text-black text-xl font-heading mb-1 dark:text-white'>
+              Login
+            </h2>
+            <p className='mb-4 text-xs text-muted-foreground'>
               Login to save your information related to projects
             </p>
             <div
