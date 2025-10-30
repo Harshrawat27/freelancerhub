@@ -30,14 +30,14 @@ export default function Home() {
               alt='Dark mode background'
               fill
               className='object-cover opacity-70'
-              priority
+              loading='lazy'
             />
             <Image
               src='https://cdn.prod.website-files.com/66b995a8da9c768e10e66aed/6903a78a16f2bfd19b19c5ff_background-01.webp'
               alt='Light mode background'
               fill
               className='object-cover opacity-70'
-              priority
+              loading='lazy'
             />
 
             <div className='max-w-3xl text-center mx-auto relative z-10'>
