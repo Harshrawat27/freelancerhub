@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FileUploadValidation } from './FileUploadValidation';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { teamMemberSchema, type TeamMemberFormData } from '@/lib/validations';
+import { DialogClose } from '@/components/ui/dialog';
 
 const UploadProfile = () => {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [formData, setFormData] = useState<TeamMemberFormData>({
     name: '',
     email: '',
@@ -79,10 +81,9 @@ const UploadProfile = () => {
       toast.success('Team member added successfully!');
 
       setFormData({ name: '', email: '', role: '', bio: '', photo: '' });
-
-      // Reset form
-      setFormData({ name: '', email: '', role: '', bio: '', photo: '' });
       setUploadedFile(null);
+
+      closeButtonRef.current?.click();
     } catch (error: any) {
       if (error.errors) {
         // Zod validation errors
@@ -182,6 +183,7 @@ const UploadProfile = () => {
       <Button type='submit' disabled={isSubmitting} className='w-full'>
         {isSubmitting ? 'Adding Member...' : 'Add Member'}
       </Button>
+      <DialogClose ref={closeButtonRef} className='hidden' />
     </form>
   );
 };
