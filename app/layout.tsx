@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
+import { Analytics } from '@vercel/analytics/next';
 
 const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
@@ -45,6 +46,7 @@ export default function RootLayout({
           <Toaster />
 
           {children}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
