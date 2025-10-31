@@ -2,7 +2,7 @@
 
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,12 +14,16 @@ interface Message {
   sender: string;
   message: string;
   isRedacted?: boolean;
+  originalIndex?: number;
+  originalLength?: number;
 }
 
 export default function CreateChats() {
   const [rawChat, setRawChat] = useState('');
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [editMode, setEditMode] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Parse WhatsApp/Telegram/other chat formats
   const parseChat = () => {
@@ -41,12 +45,15 @@ export default function CreateChats() {
         sender: match[2].trim(),
         message: match[3].trim().replace(/\n/g, ' '),
         isRedacted: false,
+        originalIndex: match.index,
+        originalLength: match[0].length,
       });
     }
 
     // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
     if (messages.length === 0) {
-      const telegramRegex = /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^\s]|$)/g;
+      const telegramRegex =
+        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^\s]|$)/g;
 
       while ((match = telegramRegex.exec(rawChat)) !== null) {
         messages.push({
@@ -55,6 +62,8 @@ export default function CreateChats() {
           timestamp: match[2].trim(),
           message: match[3].trim().replace(/\n/g, ' '),
           isRedacted: false,
+          originalIndex: match.index,
+          originalLength: match[0].length,
         });
       }
     }
@@ -119,22 +128,42 @@ export default function CreateChats() {
     setRawChat('');
     setParsedMessages([]);
     setEditMode(false);
+    setSelectedMessage(null);
     toast.success('Chat cleared');
   };
 
-  const toggleRedact = (id: string) => {
-    setParsedMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === id ? { ...msg, isRedacted: !msg.isRedacted } : msg
-      )
-    );
+  const handleMessageEdit = (id: string) => {
+    if (!editMode) return;
+
+    const message = parsedMessages.find((msg) => msg.id === id);
+    if (
+      !message ||
+      message.originalIndex === undefined ||
+      message.originalLength === undefined
+    ) {
+      return;
+    }
+
+    // Focus textarea and select the message text
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(
+        message.originalIndex,
+        message.originalIndex + message.originalLength
+      );
+      textareaRef.current.scrollTop =
+        (message.originalIndex / rawChat.length) *
+        textareaRef.current.scrollHeight;
+    }
+
+    setSelectedMessage(id);
+    // toast.info('Message selected in textarea - edit and parse again!');
   };
 
   const shareChat = () => {
     const chatText = parsedMessages
       .map((msg) => {
-        const message = msg.isRedacted ? '[REDACTED]' : msg.message;
-        return `[${msg.timestamp}] ${msg.sender}: ${message}`;
+        return `[${msg.timestamp}] ${msg.sender}: ${msg.message}`;
       })
       .join('\n');
 
@@ -145,8 +174,7 @@ export default function CreateChats() {
   const downloadChat = () => {
     const chatText = parsedMessages
       .map((msg) => {
-        const message = msg.isRedacted ? '[REDACTED]' : msg.message;
-        return `[${msg.timestamp}] ${msg.sender}: ${message}`;
+        return `[${msg.timestamp}] ${msg.sender}: ${msg.message}`;
       })
       .join('\n');
 
@@ -175,10 +203,10 @@ export default function CreateChats() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[270px] p-6 max-h-screen'>
+      <main className='ml-[270px] p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName='Create Chats' />
 
-        <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-110px)]'>
+        <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Input */}
           <div className='flex flex-col gap-4'>
             <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
@@ -191,10 +219,16 @@ export default function CreateChats() {
               </p>
 
               <Textarea
+                ref={textareaRef}
                 value={rawChat}
                 onChange={(e) => setRawChat(e.target.value)}
                 placeholder='WhatsApp: [28/10/25, 12:48:08 PM] John Doe: Hello there!&#10;Telegram: John Doe, [20 Aug 2025 at 1:10:46 PM]: Hello there!&#10;Other: Name on one line, timestamp next, then message'
-                className='min-h-[300px] font-mono text-sm text-muted-foreground'
+                className={cn(
+                  'min-h-[300px] font-mono text-sm text-muted-foreground transition-all duration-200',
+                  selectedMessage &&
+                    editMode &&
+                    'bg-primary/10 ring-2 ring-primary'
+                )}
               />
 
               <div className='flex gap-2 mt-4'>
@@ -229,7 +263,7 @@ export default function CreateChats() {
                       onClick={shareChat}
                       size='sm'
                       variant='outline'
-                      className='text-xs'
+                      className='text-xs cursor-pointer'
                     >
                       <svg
                         className='w-4 h-4 mr-1'
@@ -250,7 +284,7 @@ export default function CreateChats() {
                       onClick={downloadChat}
                       size='sm'
                       variant='outline'
-                      className='text-xs'
+                      className='text-xs cursor-pointer'
                     >
                       <svg
                         className='w-4 h-4 mr-1'
@@ -271,7 +305,7 @@ export default function CreateChats() {
                       onClick={() => setEditMode(!editMode)}
                       size='sm'
                       variant='outline'
-                      className='text-xs'
+                      className='text-xs cursor-pointer'
                     >
                       {editMode ? 'Done' : 'Edit'}
                     </Button>
@@ -321,28 +355,28 @@ export default function CreateChats() {
                             'max-w-[75%] group relative',
                             editMode && 'cursor-pointer'
                           )}
-                          onClick={() => editMode && toggleRedact(msg.id)}
+                          onClick={() => handleMessageEdit(msg.id)}
                         >
                           <div
                             className={cn(
-                              'rounded-lg p-3 shadow-sm',
+                              'rounded-lg p-3 shadow-sm transition-all duration-200',
                               isLeft
                                 ? 'bg-background text-foreground'
                                 : 'bg-primary text-primary-foreground',
-                              msg.isRedacted && 'opacity-50',
+                              selectedMessage === msg.id &&
+                                editMode &&
+                                'ring-2 ring-gray-600 dark:ring-gray-400',
                               editMode &&
-                                'hover:ring-2 hover:ring-primary transition-all'
+                                'hover:ring-2 hover:ring-gray-500 dark:hover:ring-gray-500'
                             )}
                           >
-                            <p className='font-medium text-sm mb-1'>
+                            <p className='font-medium text-sm mb-1 opacity-50'>
                               {msg.sender}
                             </p>
-                            <p className='text-sm break-words'>
-                              {msg.isRedacted ? '[REDACTED]' : msg.message}
-                            </p>
+                            <p className='text-sm break-words'>{msg.message}</p>
                             <p
                               className={cn(
-                                'text-xs mt-1',
+                                'text-xs mt-2 opacity-50',
                                 isLeft
                                   ? 'text-muted-foreground'
                                   : 'text-primary-foreground/70'
@@ -351,13 +385,6 @@ export default function CreateChats() {
                               {msg.timestamp}
                             </p>
                           </div>
-                          {editMode && (
-                            <div className='absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity'>
-                              <div className='bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold'>
-                                {msg.isRedacted ? '✓' : '×'}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
