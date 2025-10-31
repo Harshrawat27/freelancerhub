@@ -45,18 +45,18 @@ export function Sidebar() {
     >
       <div className='p-4'>
         {/* Logo/Brand */}
-        <div className='mb-6 pb-4 border-b border-dashed border-border'>
+        <div className='mb-4 pb-3 border-b border-dashed border-border'>
           <h2 className='font-heading text-xl font-bold text-foreground'>
             ChatFlow
           </h2>
         </div>
 
         {/* Menu Section */}
-        <div className='mb-6'>
-          <h3 className='px-3 py-2 text-foreground font-medium text-sm'>
+        <div className='mb-4'>
+          <h3 className='px-3 py-1 text-foreground font-medium text-sm'>
             Menu
           </h3>
-          <div className='mt-2 space-y-1'>
+          <div className='mt-1 space-y-1'>
             <Link
               href='/dashboard'
               className={cn(
@@ -110,11 +110,28 @@ export function Sidebar() {
         </div>
 
         {/* Project Section */}
-        <div className='mb-6'>
-          <h3 className='px-3 py-2 text-foreground font-medium text-sm'>
-            Project
-          </h3>
-          <div className='mt-2 space-y-2'>
+        <div className='mb-4'>
+          <div className='flex flex-row justify-between'>
+            <Link
+              href='/projects'
+              className={cn(
+                pathname === '/projects'
+                  ? 'bg-background text-foreground opacity-100 rounded-lg'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100 rounded-lg'
+              )}
+            >
+              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
+                Projects
+              </h3>
+            </Link>
+
+            <Link href='/projects'>
+              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
+                +
+              </h3>
+            </Link>
+          </div>
+          <div className='mt-1 space-y-1'>
             {dummyProjects.map((project) => (
               <div
                 key={project.id}
@@ -133,11 +150,28 @@ export function Sidebar() {
         </div>
 
         {/* Members Section */}
-        <div className='mb-6'>
-          <h3 className='px-3 py-2 text-foreground font-medium text-sm'>
-            Members
-          </h3>
-          <div className='mt-2 space-y-2'>
+        <div className='mb-4'>
+          <div className='flex flex-row justify-between'>
+            <Link
+              href='/members'
+              className={cn(
+                pathname === '/members'
+                  ? 'bg-background text-foreground opacity-100 rounded-lg'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100 rounded-lg'
+              )}
+            >
+              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
+                Members
+              </h3>
+            </Link>
+
+            <Link href='/projects'>
+              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
+                +
+              </h3>
+            </Link>
+          </div>
+          <div className='mt-1 space-y-1'>
             {dummyMembers.map((member) => (
               <div
                 key={member.id}
