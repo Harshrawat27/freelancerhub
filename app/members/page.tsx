@@ -2,7 +2,7 @@
 
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import UploadProfile from '@/components/UploadProfile';
+import { CardSkeleton } from '@/components/CardSkeleton';
 
 interface TeamMember {
   id: string;
@@ -55,8 +56,10 @@ export default function Members() {
         <Topbar pageName='Team Members' />
 
         {isLoading ? (
-          <div className='mt-6 text-center text-muted-foreground'>
-            Loading team members...
+          <div className='mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
           </div>
         ) : (
           <div className='mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -106,59 +109,61 @@ export default function Members() {
             </Dialog>
 
             {/* Team Member Cards */}
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className={cn(
-                  'bg-secondary rounded-lg p-6',
-                  'shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)]',
-                  'dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
-                  'hover:shadow-lg transition-shadow duration-200'
-                )}
-              >
-                <div className='flex flex-col items-center text-center'>
-                  {/* Profile Photo */}
-                  <div className='w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4 overflow-hidden'>
-                    {member.photo ? (
-                      <Image
-                        src={member.photo}
-                        alt={member.name}
-                        width={96}
-                        height={96}
-                        className='object-cover w-full h-full'
-                      />
-                    ) : (
-                      <span className='text-2xl font-bold text-primary'>
-                        {member.name
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </span>
+            <Suspense fallback={<CardSkeleton />}>
+              {members.map((member) => (
+                <div
+                  key={member.id}
+                  className={cn(
+                    'bg-secondary rounded-lg p-6',
+                    'shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)]',
+                    'dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
+                    'hover:shadow-lg transition-shadow duration-200'
+                  )}
+                >
+                  <div className='flex flex-col items-center text-center'>
+                    {/* Profile Photo */}
+                    <div className='w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4 overflow-hidden'>
+                      {member.photo ? (
+                        <Image
+                          src={member.photo}
+                          alt={member.name}
+                          width={96}
+                          height={96}
+                          className='object-cover w-full h-full'
+                        />
+                      ) : (
+                        <span className='text-2xl font-bold text-primary'>
+                          {member.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Member Info */}
+                    <h3 className='font-heading text-xl font-bold text-foreground mb-1'>
+                      {member.name}
+                    </h3>
+                    <p className='text-primary text-sm font-medium mb-2'>
+                      {member.role}
+                    </p>
+                    <p className='text-muted-foreground text-sm mb-3'>
+                      {member.email}
+                    </p>
+
+                    {/* Bio */}
+                    {member.bio && (
+                      <p className='text-muted-foreground text-xs line-clamp-3 mt-2'>
+                        {member.bio}
+                      </p>
                     )}
                   </div>
-
-                  {/* Member Info */}
-                  <h3 className='font-heading text-xl font-bold text-foreground mb-1'>
-                    {member.name}
-                  </h3>
-                  <p className='text-primary text-sm font-medium mb-2'>
-                    {member.role}
-                  </p>
-                  <p className='text-muted-foreground text-sm mb-3'>
-                    {member.email}
-                  </p>
-
-                  {/* Bio */}
-                  {member.bio && (
-                    <p className='text-muted-foreground text-xs line-clamp-3 mt-2'>
-                      {member.bio}
-                    </p>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </Suspense>
           </div>
         )}
 
