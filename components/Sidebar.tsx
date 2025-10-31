@@ -12,6 +12,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { authClient, useSession } from '@/lib/auth-client';
+import UploadProject from '@/components/UploadProject';
+import UploadProfile from '@/components/UploadProfile';
 
 // Dummy data
 const dummyProjects = [
@@ -124,12 +126,49 @@ export function Sidebar() {
                 Projects
               </h3>
             </Link>
-
-            <Link href='/projects'>
-              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
-                +
-              </h3>
-            </Link>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className='group p-1 rounded-full transition-colors duration-200'>
+                  <svg
+                    className='w-5 h-5 cursor-pointer'
+                    fill='none'
+                    strokeWidth={1}
+                    viewBox='0 0 24 24'
+                  >
+                    <circle
+                      cx='12'
+                      cy='12'
+                      r='10'
+                      className='stroke-foreground group-hover:fill-primary transition-all duration-200'
+                    />
+                    <line
+                      x1='12'
+                      y1='8'
+                      x2='12'
+                      y2='16'
+                      className='stroke-foreground transition-all duration-200'
+                    />
+                    <line
+                      x1='8'
+                      y1='12'
+                      x2='16'
+                      y2='12'
+                      className='stroke-foreground transition-all duration-200'
+                    />
+                  </svg>
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Project</DialogTitle>
+                  <DialogDescription>
+                    Create a new project to organize your work and track
+                    progress.
+                  </DialogDescription>
+                </DialogHeader>
+                <UploadProject />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className='mt-1 space-y-1'>
             {dummyProjects.map((project) => (
@@ -164,12 +203,49 @@ export function Sidebar() {
                 Members
               </h3>
             </Link>
-
-            <Link href='/projects'>
-              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
-                +
-              </h3>
-            </Link>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className='group p-1 rounded-full transition-colors duration-200'>
+                  <svg
+                    className='w-5 h-5 cursor-pointer'
+                    fill='none'
+                    strokeWidth={1}
+                    viewBox='0 0 24 24'
+                  >
+                    <circle
+                      cx='12'
+                      cy='12'
+                      r='10'
+                      className='stroke-foreground group-hover:fill-primary transition-all duration-200'
+                    />
+                    <line
+                      x1='12'
+                      y1='8'
+                      x2='12'
+                      y2='16'
+                      className='stroke-foreground transition-all duration-200'
+                    />
+                    <line
+                      x1='8'
+                      y1='12'
+                      x2='16'
+                      y2='12'
+                      className='stroke-foreground transition-all duration-200'
+                    />
+                  </svg>
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Member</DialogTitle>
+                  <DialogDescription>
+                    Add a new team member to collaborate on projects and share
+                    tasks.
+                  </DialogDescription>
+                </DialogHeader>
+                <UploadProfile />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className='mt-1 space-y-1'>
             {dummyMembers.map((member) => (
