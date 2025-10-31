@@ -135,10 +135,10 @@ export function Sidebar() {
             </Link>
 
             <Link
-              href='/create-chat'
+              href='/create-chats'
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm',
-                pathname === '/create-chat'
+                pathname === '/create-chats'
                   ? 'bg-background text-foreground opacity-100'
                   : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
