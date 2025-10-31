@@ -31,7 +31,7 @@ export default function CreateChats() {
     let messages: Message[] = [];
 
     // Try WhatsApp format: [date, time] Name: Message
-    const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*(.+?)(?=\n\[|$)/gs;
+    const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
     let match;
 
     while ((match = whatsappRegex.exec(rawChat)) !== null) {
@@ -46,7 +46,7 @@ export default function CreateChats() {
 
     // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
     if (messages.length === 0) {
-      const telegramRegex = /([^,]+),\s*\[([^\]]+)\]:\s*(.+?)(?=\n[^\s]|$)/gs;
+      const telegramRegex = /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^\s]|$)/g;
 
       while ((match = telegramRegex.exec(rawChat)) !== null) {
         messages.push({
