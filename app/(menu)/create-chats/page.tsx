@@ -373,7 +373,9 @@ export default function CreateChats() {
                             <p className='font-medium text-sm mb-1 opacity-50'>
                               {msg.sender}
                             </p>
-                            <p className='text-sm break-words'>{msg.message}</p>
+                            <p className='text-sm wrap-break-word'>
+                              {msg.message}
+                            </p>
                             <p
                               className={cn(
                                 'text-xs mt-2 opacity-50',

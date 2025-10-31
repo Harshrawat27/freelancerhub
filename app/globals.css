@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Custom variant for dark mode */
 @custom-variant dark (&:is(.dark *));
@@ -33,34 +33,34 @@
 
 /* Light mode colors */
 :root {
-  --background: #B0AFAF;
+  --background: #b0afaf;
   --foreground: #121212;
-  --primary: #EE575A;
+  --primary: #ee575a;
   --primary-foreground: #ffffff;
-  --secondary: #BEBEBE;
+  --secondary: #bebebe;
   --secondary-foreground: #121212;
-  --muted: #BEBEBE;
+  --muted: #bebebe;
   --muted-foreground: #121212;
-  --accent: #BEBEBE;
+  --accent: #bebebe;
   --accent-foreground: #121212;
   --border: rgba(18, 18, 18, 0.2);
-  --ring: #EE575A;
+  --ring: #ee575a;
 }
 
 /* Dark mode colors */
 .dark {
   --background: #161616;
-  --foreground: #B3B3B3;
-  --primary: #EE575A;
+  --foreground: #b3b3b3;
+  --primary: #ee575a;
   --primary-foreground: #ffffff;
   --secondary: #242426;
-  --secondary-foreground: #B3B3B3;
+  --secondary-foreground: #b3b3b3;
   --muted: #242426;
-  --muted-foreground: #B3B3B3;
+  --muted-foreground: #b3b3b3;
   --accent: #242426;
-  --accent-foreground: #B3B3B3;
+  --accent-foreground: #b3b3b3;
   --border: rgba(179, 179, 179, 0.2);
-  --ring: #EE575A;
+  --ring: #ee575a;
 }
 
 @layer base {
@@ -70,7 +70,7 @@
 
   body {
     @apply bg-background text-foreground font-mono antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    /* transition: background-color 0.3s ease, color 0.3s ease; */
   }
 }
 
