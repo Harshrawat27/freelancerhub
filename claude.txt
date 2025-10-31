@@ -2,3 +2,6 @@
 - project Storage
 - chat
 - invoices
+
+- owner can hide dat and time of chat, name of another person, give hime some name etc!
+- upload document in invoice
