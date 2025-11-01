@@ -6,16 +6,9 @@ import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { emailSchema } from '@/lib/validations';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -28,59 +21,57 @@ interface Message {
 }
 
 export default function CreateChats() {
+  const router = useRouter();
   const [rawChat, setRawChat] = useState('');
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [shareEmail, setShareEmail] = useState('');
-  const [sharedWith, setSharedWith] = useState<
-    { email: string; permission: string }[]
-  >([]);
-  const [linkAccess, setLinkAccess] = useState<'restricted' | 'anyone'>(
-    'restricted'
-  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [chatTitle, setChatTitle] = useState('');
+  const [leftSenders, setLeftSenders] = useState<string[]>([]);
+  const [rightSenders, setRightSenders] = useState<string[]>([]);
 
-  const addSharedUser = () => {
-    // Validate email using Zod schema
-    const result = emailSchema.safeParse(shareEmail.trim());
-
-    if (!result.success) {
-      toast.error('Please enter a valid email address');
+  const saveChat = async () => {
+    if (!rawChat.trim() || parsedMessages.length === 0) {
+      toast.error('Please parse a chat first');
       return;
     }
 
-    const validEmail = result.data;
-
-    // Check if already shared
-    if (sharedWith.find((u) => u.email === validEmail)) {
-      toast.error('This email is already added');
+    if (!chatTitle.trim()) {
+      toast.error('Please enter a chat title');
       return;
     }
 
-    // Add user
-    setSharedWith([...sharedWith, { email: validEmail, permission: 'viewer' }]);
-    setShareEmail('');
-    toast.success(`Shared with ${validEmail}`);
-  };
+    setIsSaving(true);
 
-  const removeSharedUser = (email: string) => {
-    setSharedWith(sharedWith.filter((u) => u.email !== email));
-    toast.success('Access removed');
-  };
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: chatTitle,
+          rawText: rawChat,
+        }),
+      });
 
-  const updatePermission = (email: string, permission: string) => {
-    setSharedWith(
-      sharedWith.map((u) => (u.email === email ? { ...u, permission } : u))
-    );
-  };
+      if (!response.ok) {
+        throw new Error('Failed to save chat');
+      }
 
-  const copyShareableLink = () => {
-    const link = `${window.location.origin}/shared/chat/${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Link copied to clipboard!');
+      const savedChat = await response.json();
+      toast.success('Chat saved successfully!');
+
+      // Redirect to the saved chat page
+      router.push(`/chats/${savedChat.id}`);
+    } catch (error) {
+      console.error('Error saving chat:', error);
+      toast.error('Failed to save chat');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Parse WhatsApp/Telegram/other chat formats
@@ -179,6 +170,27 @@ export default function CreateChats() {
     }
 
     setParsedMessages(messages);
+
+    // Extract unique senders and auto-populate title and assignments
+    const uniqueSenders = Array.from(
+      new Set(messages.map((msg) => msg.sender))
+    );
+
+    // Auto-generate title
+    const autoTitle =
+      uniqueSenders.length > 1
+        ? `${uniqueSenders[0]} and ${uniqueSenders.length - 1} other${
+            uniqueSenders.length > 2 ? 's' : ''
+          }`
+        : uniqueSenders[0] || 'Untitled Chat';
+    setChatTitle(autoTitle);
+
+    // Default assignment: first sender to right, rest to left
+    if (uniqueSenders.length > 0) {
+      setRightSenders([uniqueSenders[0]]);
+      setLeftSenders(uniqueSenders.slice(1));
+    }
+
     toast.success(`Parsed ${messages.length} messages successfully!`);
   };
 
@@ -187,7 +199,20 @@ export default function CreateChats() {
     setParsedMessages([]);
     setEditMode(false);
     setSelectedMessage(null);
+    setChatTitle('');
+    setLeftSenders([]);
+    setRightSenders([]);
     toast.success('Chat cleared');
+  };
+
+  const moveSenderToRight = (sender: string) => {
+    setLeftSenders(leftSenders.filter((s) => s !== sender));
+    setRightSenders([...rightSenders, sender]);
+  };
+
+  const moveSenderToLeft = (sender: string) => {
+    setRightSenders(rightSenders.filter((s) => s !== sender));
+    setLeftSenders([...leftSenders, sender]);
   };
 
   const handleMessageEdit = (id: string) => {
@@ -247,14 +272,11 @@ export default function CreateChats() {
     toast.success('Chat downloaded!');
   };
 
-  // Get unique senders for color coding
-  const uniqueSenders = Array.from(
-    new Set(parsedMessages.map((msg) => msg.sender))
-  );
-
   const getSenderColor = (sender: string) => {
-    const index = uniqueSenders.indexOf(sender);
-    return index % 2 === 0 ? 'right' : 'left';
+    if (rightSenders.includes(sender)) {
+      return 'right';
+    }
+    return 'left';
   };
 
   return (
@@ -265,8 +287,8 @@ export default function CreateChats() {
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Input */}
-          <div className='flex flex-col gap-4'>
-            <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+          <div className='flex flex-col gap-4 overflow-auto'>
+            <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] flex flex-col grow'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-2'>
                 Paste Chat
               </h2>
@@ -281,7 +303,7 @@ export default function CreateChats() {
                 onChange={(e) => setRawChat(e.target.value)}
                 placeholder='WhatsApp: [28/10/25, 12:48:08 PM] John Doe: Hello there!&#10;Telegram: John Doe, [20 Aug 2025 at 1:10:46 PM]: Hello there!&#10;Other: Name on one line, timestamp next, then message'
                 className={cn(
-                  'min-h-[300px] font-mono text-sm text-muted-foreground',
+                  'min-h-[250px] font-mono text-sm text-muted-foreground grow',
                   selectedMessage &&
                     editMode &&
                     'bg-primary/10 ring-2 ring-primary'
@@ -304,6 +326,136 @@ export default function CreateChats() {
                 </Button>
               </div>
             </div>
+
+            {/* Title and Sender Assignment */}
+            {parsedMessages.length > 0 && (
+              <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+                {/* Title Input */}
+                <div className='mb-4'>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Chat Title
+                  </label>
+                  <Input
+                    value={chatTitle}
+                    onChange={(e) => setChatTitle(e.target.value)}
+                    placeholder='Enter chat title...'
+                    className='w-full'
+                  />
+                </div>
+
+                {/* Sender Assignment */}
+                <div>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Assign Participants
+                  </label>
+                  <p className='text-xs text-muted-foreground mb-3'>
+                    Click on names to move them between left and right sides
+                  </p>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    {/* Left Side Senders */}
+                    <div className='border border-border rounded-lg p-3 bg-background/50'>
+                      <h3 className='text-xs font-semibold text-foreground mb-2 flex items-center'>
+                        <svg
+                          className='w-3 h-3 mr-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M15 19l-7-7 7-7'
+                          />
+                        </svg>
+                        Left Side
+                      </h3>
+                      <div className='space-y-2'>
+                        {leftSenders.length === 0 ? (
+                          <p className='text-xs text-muted-foreground italic'>
+                            No participants
+                          </p>
+                        ) : (
+                          leftSenders.map((sender) => (
+                            <div
+                              key={sender}
+                              onClick={() => moveSenderToRight(sender)}
+                              className='px-3 py-2 bg-muted rounded-md text-xs font-medium cursor-pointer hover:bg-muted/70 transition-colors flex items-center justify-between group'
+                            >
+                              <span>{sender}</span>
+                              <svg
+                                className='w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  strokeWidth={2}
+                                  d='M9 5l7 7-7 7'
+                                />
+                              </svg>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Side Senders */}
+                    <div className='border border-border rounded-lg p-3 bg-primary/5'>
+                      <h3 className='text-xs font-semibold text-foreground mb-2 flex items-center'>
+                        <svg
+                          className='w-3 h-3 mr-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M9 5l7 7-7 7'
+                          />
+                        </svg>
+                        Right Side
+                      </h3>
+                      <div className='space-y-2'>
+                        {rightSenders.length === 0 ? (
+                          <p className='text-xs text-muted-foreground italic'>
+                            No participants
+                          </p>
+                        ) : (
+                          rightSenders.map((sender) => (
+                            <div
+                              key={sender}
+                              onClick={() => moveSenderToLeft(sender)}
+                              className='px-3 py-2 bg-primary/20 rounded-md text-xs font-medium cursor-pointer hover:bg-primary/30 transition-colors flex items-center justify-between group'
+                            >
+                              <svg
+                                className='w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  strokeWidth={2}
+                                  d='M15 19l-7-7 7-7'
+                                />
+                              </svg>
+                              <span>{sender}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Side - Chat Display */}
@@ -316,217 +468,14 @@ export default function CreateChats() {
                 </h2>
                 {parsedMessages.length > 0 && (
                   <div className='flex gap-2'>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          className='text-xs cursor-pointer'
-                        >
-                          <svg
-                            className='w-4 h-4 mr-1'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z'
-                            />
-                          </svg>
-                          Share
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className='max-w-lg'>
-                        <DialogHeader>
-                          <DialogTitle className='font-heading text-xl'>
-                            Share Chat
-                          </DialogTitle>
-                          <DialogDescription>
-                            Share this chat with people via email or link
-                          </DialogDescription>
-                        </DialogHeader>
-
-                        <div className='space-y-6 mt-4'>
-                          {/* Add people */}
-                          <div className='space-y-3'>
-                            <label className='text-sm font-medium text-foreground'>
-                              Add people
-                            </label>
-                            <div className='flex gap-2 mt-2'>
-                              <input
-                                type='email'
-                                placeholder='Enter email address...'
-                                value={shareEmail}
-                                onChange={(e) => setShareEmail(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addSharedUser();
-                                  }
-                                }}
-                                className='flex-1 px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary'
-                              />
-                              <Button
-                                onClick={addSharedUser}
-                                size='sm'
-                                className='bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
-                              >
-                                Add
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* People with access */}
-                          {sharedWith.length > 0 && (
-                            <div className='space-y-2'>
-                              <label className='text-sm font-medium text-foreground'>
-                                People with access
-                              </label>
-                              <div className='space-y-2 max-h-[200px] overflow-y-auto'>
-                                {sharedWith.map((user) => (
-                                  <div
-                                    key={user.email}
-                                    className='flex items-center justify-between p-3 bg-muted/30 rounded-lg mt-2.5'
-                                  >
-                                    <div className='flex items-center gap-3'>
-                                      <div className='w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center'>
-                                        <span className='text-xs font-medium text-primary'>
-                                          {user.email[0].toUpperCase()}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <p className='text-sm font-medium text-foreground'>
-                                          {user.email}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className='flex items-center gap-2'>
-                                      <select
-                                        value={user.permission}
-                                        onChange={(e) =>
-                                          updatePermission(
-                                            user.email,
-                                            e.target.value
-                                          )
-                                        }
-                                        className='w-[110px] h-8 text-xs px-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer'
-                                      >
-                                        <option value='viewer'>Viewer</option>
-                                        <option value='editor'>Editor</option>
-                                      </select>
-                                      <Button
-                                        onClick={() =>
-                                          removeSharedUser(user.email)
-                                        }
-                                        size='sm'
-                                        variant='ghost'
-                                        className='h-8 w-8 p-0 cursor-pointer'
-                                      >
-                                        <svg
-                                          className='w-4 h-4'
-                                          fill='none'
-                                          stroke='currentColor'
-                                          viewBox='0 0 24 24'
-                                        >
-                                          <path
-                                            strokeLinecap='round'
-                                            strokeLinejoin='round'
-                                            strokeWidth={2}
-                                            d='M6 18L18 6M6 6l12 12'
-                                          />
-                                        </svg>
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* General access */}
-                          <div className='border-t border-border pt-4 space-y-3'>
-                            <label className='text-sm font-medium text-foreground'>
-                              General access
-                            </label>
-                            <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg mt-2.5'>
-                              <div className='flex items-center gap-3'>
-                                <svg
-                                  className='w-5 h-5 text-muted-foreground'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'
-                                  />
-                                </svg>
-                                <div>
-                                  <p className='text-sm font-medium text-foreground'>
-                                    {linkAccess === 'anyone'
-                                      ? 'Anyone with the link'
-                                      : 'Restricted'}
-                                  </p>
-                                  <p className='text-xs text-muted-foreground'>
-                                    {linkAccess === 'anyone'
-                                      ? 'Anyone on the internet with the link can view'
-                                      : 'Only people with access can open'}
-                                  </p>
-                                </div>
-                              </div>
-                              <select
-                                value={linkAccess}
-                                onChange={(e) =>
-                                  setLinkAccess(
-                                    e.target.value as 'restricted' | 'anyone'
-                                  )
-                                }
-                                className='w-[130px] h-8 text-xs px-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer'
-                              >
-                                <option value='restricted'>Restricted</option>
-                                <option value='anyone'>Anyone with link</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          {/* Copy link button */}
-                          <div className='flex gap-2'>
-                            <Button
-                              onClick={copyShareableLink}
-                              variant='outline'
-                              className='flex-1 cursor-pointer'
-                            >
-                              <svg
-                                className='w-4 h-4 mr-2'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                              >
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth={2}
-                                  d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
-                                />
-                              </svg>
-                              Copy link
-                            </Button>
-                            <Button
-                              onClick={copyToClipboard}
-                              className='flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 cursor-pointer'
-                            >
-                              Copy chat text
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
+                    <Button
+                      onClick={saveChat}
+                      size='sm'
+                      disabled={isSaving}
+                      className='text-xs bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 cursor-pointer'
+                    >
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
                     <Button
                       onClick={downloadChat}
                       size='sm'
