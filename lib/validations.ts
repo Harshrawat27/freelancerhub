@@ -11,4 +11,7 @@ export const teamMemberSchema = z.object({
 
 export type TeamMemberFormData = z.infer<typeof teamMemberSchema>;
 
+// Email validation
+export const emailSchema = z.string().email('Invalid email address');
+
 // Add more schemas here as needed for other forms
