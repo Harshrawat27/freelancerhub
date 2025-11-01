@@ -43,7 +43,7 @@ export default function CreateChats() {
         id: Math.random().toString(36).substr(2, 9),
         timestamp: match[1].trim(),
         sender: match[2].trim(),
-        message: match[3].trim().replace(/\n/g, ' '),
+        message: match[3].trim(),
         isRedacted: false,
         originalIndex: match.index,
         originalLength: match[0].length,
@@ -53,14 +53,14 @@ export default function CreateChats() {
     // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
     if (messages.length === 0) {
       const telegramRegex =
-        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^\s]|$)/g;
+        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
 
       while ((match = telegramRegex.exec(rawChat)) !== null) {
         messages.push({
           id: Math.random().toString(36).substr(2, 9),
           sender: match[1].trim(),
           timestamp: match[2].trim(),
-          message: match[3].trim().replace(/\n/g, ' '),
+          message: match[3].trim(),
           isRedacted: false,
           originalIndex: match.index,
           originalLength: match[0].length,
@@ -373,7 +373,7 @@ export default function CreateChats() {
                             <p className='font-medium text-sm mb-1 opacity-50'>
                               {msg.sender}
                             </p>
-                            <p className='text-sm wrap-break-word'>
+                            <p className='text-sm whitespace-pre-wrap break-words'>
                               {msg.message}
                             </p>
                             <p
