@@ -95,7 +95,7 @@ export function Sidebar() {
             <Link
               href='/dashboard'
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm',
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
                 pathname === '/dashboard'
                   ? 'bg-background text-foreground opacity-100'
                   : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
@@ -122,7 +122,7 @@ export function Sidebar() {
               <div
                 onClick={() => toggleMenu('invoice')}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm cursor-pointer',
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
                   pathname === '/create-invoice' || pathname === '/invoices'
                     ? 'bg-background text-foreground opacity-100'
                     : 'text-muted-foreground opacity-50 hover:opacity-100'
@@ -197,7 +197,7 @@ export function Sidebar() {
               <div
                 onClick={() => toggleMenu('proposal')}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm cursor-pointer',
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
                   pathname === '/create-proposal' || pathname === '/proposals'
                     ? 'bg-background text-foreground opacity-100'
                     : 'text-muted-foreground opacity-50 hover:opacity-100'
@@ -272,7 +272,7 @@ export function Sidebar() {
               <div
                 onClick={() => toggleMenu('chats')}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm cursor-pointer',
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
                   pathname === '/create-chats' || pathname === '/chats'
                     ? 'bg-background text-foreground opacity-100'
                     : 'text-muted-foreground opacity-50 hover:opacity-100'
@@ -407,7 +407,7 @@ export function Sidebar() {
             {dummyProjects.map((project) => (
               <div
                 key={project.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
+                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background cursor-pointer opacity-50 hover:opacity-100'
               >
                 <div
                   className='w-3 h-3 rounded-full shrink-0'
@@ -484,7 +484,7 @@ export function Sidebar() {
             {dummyMembers.map((member) => (
               <div
                 key={member.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background transition-colors duration-200 cursor-pointer opacity-50 hover:opacity-100'
+                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background cursor-pointer opacity-50 hover:opacity-100'
               >
                 <div className='w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0'>
                   <span className='text-xs font-medium text-primary'>
@@ -521,7 +521,7 @@ export function Sidebar() {
                   'bg-primary text-primary-foreground',
                   'shadow-md shadow-primary/20 button-highlighted-shadow',
                   'hover:bg-primary/90',
-                  'transition-colors duration-200 cursor-pointer inline-block'
+                  'cursor-pointer inline-block'
                 )}
               >
                 <Dialog>
@@ -597,7 +597,7 @@ export function Sidebar() {
                 'bg-primary text-primary-foreground',
                 'shadow-md shadow-primary/20 button-highlighted-shadow',
                 'hover:bg-primary/90',
-                'transition-colors duration-200 cursor-pointer'
+                'cursor-pointer'
               )}
             >
               Logout

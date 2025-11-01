@@ -224,7 +224,7 @@ export default function CreateChats() {
                 onChange={(e) => setRawChat(e.target.value)}
                 placeholder='WhatsApp: [28/10/25, 12:48:08 PM] John Doe: Hello there!&#10;Telegram: John Doe, [20 Aug 2025 at 1:10:46 PM]: Hello there!&#10;Other: Name on one line, timestamp next, then message'
                 className={cn(
-                  'min-h-[300px] font-mono text-sm text-muted-foreground transition-all duration-200',
+                  'min-h-[300px] font-mono text-sm text-muted-foreground',
                   selectedMessage &&
                     editMode &&
                     'bg-primary/10 ring-2 ring-primary'
@@ -359,10 +359,11 @@ export default function CreateChats() {
                         >
                           <div
                             className={cn(
-                              'rounded-lg p-3 shadow-sm transition-all duration-200',
+                              // 'rounded-lg p-3 shadow-sm transition-all duration-200',
+                              'rounded-lg p-3 shadow-sm',
                               isLeft
                                 ? 'bg-background text-foreground'
-                                : 'bg-primary text-primary-foreground',
+                                : 'bg-primary/70 text-primary-foreground',
                               selectedMessage === msg.id &&
                                 editMode &&
                                 'ring-2 ring-gray-600 dark:ring-gray-400',
@@ -373,7 +374,7 @@ export default function CreateChats() {
                             <p className='font-medium text-sm mb-1 opacity-50'>
                               {msg.sender}
                             </p>
-                            <p className='text-sm whitespace-pre-wrap break-words'>
+                            <p className='text-sm whitespace-pre-wrap wrap-break-word'>
                               {msg.message}
                             </p>
                             <p
