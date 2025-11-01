@@ -6,6 +6,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -31,6 +32,8 @@ interface Chat {
   id: string;
   title: string;
   rawText: string;
+  senderPositions?: { left: string[]; right: string[] } | null;
+  nameMapping?: Record<string, string> | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -57,6 +60,10 @@ export default function ChatDetail({
   const [linkAccess, setLinkAccess] = useState<'restricted' | 'anyone'>(
     'restricted'
   );
+  const [chatTitle, setChatTitle] = useState('');
+  const [leftSenders, setLeftSenders] = useState<string[]>([]);
+  const [rightSenders, setRightSenders] = useState<string[]>([]);
+  const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
 
   // Unwrap params
   useEffect(() => {
@@ -85,9 +92,19 @@ export default function ChatDetail({
         const data = await response.json();
         setChat(data);
         setRawChat(data.rawText);
+        setChatTitle(data.title);
+
+        // Load sender positions and name mapping
+        if (data.senderPositions) {
+          setLeftSenders(data.senderPositions.left || []);
+          setRightSenders(data.senderPositions.right || []);
+        }
+        if (data.nameMapping) {
+          setNameMapping(data.nameMapping);
+        }
 
         // Parse the chat immediately
-        parseChat(data.rawText);
+        parseChat(data.rawText, data.senderPositions);
       } catch (error) {
         console.error('Error fetching chat:', error);
         toast.error('Failed to load chat');
@@ -140,7 +157,10 @@ export default function ChatDetail({
   };
 
   // Parse chat text
-  const parseChat = (text: string) => {
+  const parseChat = (
+    text: string,
+    savedPositions?: { left: string[]; right: string[] } | null
+  ) => {
     if (!text.trim()) {
       setParsedMessages([]);
       return;
@@ -228,6 +248,67 @@ export default function ChatDetail({
     }
 
     setParsedMessages(messages);
+
+    // Set default sender positions if not already set
+    if (
+      !savedPositions &&
+      leftSenders.length === 0 &&
+      rightSenders.length === 0
+    ) {
+      const uniqueSenders = Array.from(
+        new Set(messages.map((msg) => msg.sender))
+      );
+      if (uniqueSenders.length > 0) {
+        setRightSenders([uniqueSenders[0]]);
+        setLeftSenders(uniqueSenders.slice(1));
+      }
+    }
+  };
+
+  const moveSenderToRight = (sender: string) => {
+    setLeftSenders(leftSenders.filter((s) => s !== sender));
+    setRightSenders([...rightSenders, sender]);
+  };
+
+  const moveSenderToLeft = (sender: string) => {
+    setRightSenders(rightSenders.filter((s) => s !== sender));
+    setLeftSenders([...leftSenders, sender]);
+  };
+
+  const renameSender = (originalName: string, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('Name cannot be empty');
+      return;
+    }
+
+    // Update name mapping
+    setNameMapping((prev) => ({
+      ...prev,
+      [originalName]: newName.trim(),
+    }));
+
+    // Replace all occurrences in rawChat
+    const updatedChat = rawChat.replace(
+      new RegExp(
+        `\\b${originalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+        'g'
+      ),
+      newName.trim()
+    );
+    setRawChat(updatedChat);
+
+    // Update sender lists
+    setLeftSenders((prev) =>
+      prev.map((s) => (s === originalName ? newName.trim() : s))
+    );
+    setRightSenders((prev) =>
+      prev.map((s) => (s === originalName ? newName.trim() : s))
+    );
+
+    // Re-parse the chat to update messages
+    parseChat(updatedChat, { left: leftSenders, right: rightSenders });
+
+    toast.success(`Renamed "${originalName}" to "${newName}"`);
   };
 
   const handleEditToggle = async () => {
@@ -238,6 +319,14 @@ export default function ChatDetail({
         return;
       }
 
+      if (!chatTitle.trim()) {
+        toast.error('Title cannot be empty');
+        return;
+      }
+
+      // Disable edit mode immediately to prevent further changes
+      setEditMode(false);
+      setSelectedMessage(null);
       setIsUpdating(true);
 
       try {
@@ -247,7 +336,13 @@ export default function ChatDetail({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            title: chatTitle,
             rawText: rawChat,
+            senderPositions: {
+              left: leftSenders,
+              right: rightSenders,
+            },
+            nameMapping,
           }),
         });
 
@@ -257,13 +352,13 @@ export default function ChatDetail({
 
         const updatedChat = await response.json();
         setChat(updatedChat);
-        parseChat(rawChat);
+        parseChat(rawChat, { left: leftSenders, right: rightSenders });
         toast.success('Chat updated successfully!');
-        setEditMode(false);
-        setSelectedMessage(null);
       } catch (error) {
         console.error('Error updating chat:', error);
         toast.error('Failed to update chat');
+        // Re-enable edit mode if save failed
+        setEditMode(true);
       } finally {
         setIsUpdating(false);
       }
@@ -329,14 +424,11 @@ export default function ChatDetail({
     toast.success('Chat downloaded!');
   };
 
-  // Get unique senders for color coding
-  const uniqueSenders = Array.from(
-    new Set(parsedMessages.map((msg) => msg.sender))
-  );
-
   const getSenderColor = (sender: string) => {
-    const index = uniqueSenders.indexOf(sender);
-    return index % 2 === 0 ? 'right' : 'left';
+    if (rightSenders.includes(sender)) {
+      return 'right';
+    }
+    return 'left';
   };
 
   if (isLoading) {
@@ -379,12 +471,31 @@ export default function ChatDetail({
         <Topbar pageName={chat.title} />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
-          {/* Left Side - Input */}
-          <div className='flex flex-col gap-4'>
-            <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+          {/* Left Side - Input and Controls */}
+          {/* <div className='flex flex-col gap-4 overflow-y-auto'> */}
+          <div className='flex flex-col overflow-y-auto'>
+            {/* Raw Chat Text */}
+            <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] grow flex flex-col pb-0 rounded-b-none'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-2'>
                 {editMode ? 'Edit Chat' : 'Chat Source'}
               </h2>
+
+              <div className='mb-4'>
+                <label className='text-sm font-medium text-foreground mb-2 block'>
+                  Chat Title
+                </label>
+                <Input
+                  value={chatTitle}
+                  onChange={(e) => setChatTitle(e.target.value)}
+                  placeholder='Enter chat title...'
+                  disabled={!editMode}
+                  className={cn(
+                    'w-full',
+                    !editMode && 'opacity-60 cursor-not-allowed'
+                  )}
+                />
+              </div>
+
               <p className='text-muted-foreground text-sm mb-4'>
                 {editMode
                   ? 'Edit the raw chat text and click "Done" to save changes.'
@@ -397,7 +508,7 @@ export default function ChatDetail({
                 onChange={(e) => setRawChat(e.target.value)}
                 disabled={!editMode}
                 className={cn(
-                  'min-h-[300px] font-mono text-sm text-muted-foreground',
+                  'min-h-[100px] font-mono text-sm text-muted-foreground grow',
                   !editMode && 'opacity-60 cursor-not-allowed',
                   selectedMessage &&
                     editMode &&
@@ -405,6 +516,235 @@ export default function ChatDetail({
                 )}
               />
             </div>
+
+            {/* Title and Sender Assignment */}
+            {parsedMessages.length > 0 && (
+              <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] pt-4 rounded-t-none'>
+                {/* Title Input */}
+                {/* <div className='mb-4'>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Chat Title
+                  </label>
+                  <Input
+                    value={chatTitle}
+                    onChange={(e) => setChatTitle(e.target.value)}
+                    placeholder='Enter chat title...'
+                    disabled={!editMode}
+                    className={cn(
+                      'w-full',
+                      !editMode && 'opacity-60 cursor-not-allowed'
+                    )}
+                  />
+                </div> */}
+
+                {/* Sender Assignment */}
+                <div>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Assign Participants
+                  </label>
+                  <p className='text-xs text-muted-foreground mb-3'>
+                    {editMode
+                      ? 'Click on names to move them between left and right sides'
+                      : 'Participant positions (click Edit to change)'}
+                  </p>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    {/* Left Side Senders */}
+                    <div className='border border-border rounded-lg p-3 bg-background/50'>
+                      <h3 className='text-xs font-semibold text-foreground mb-2 flex items-center'>
+                        <svg
+                          className='w-3 h-3 mr-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M15 19l-7-7 7-7'
+                          />
+                        </svg>
+                        Left Side
+                      </h3>
+                      <div className='space-y-2'>
+                        {leftSenders.length === 0 ? (
+                          <p className='text-xs text-muted-foreground italic'>
+                            No participants
+                          </p>
+                        ) : (
+                          leftSenders.map((sender) => (
+                            <div
+                              key={sender}
+                              onClick={() =>
+                                editMode && moveSenderToRight(sender)
+                              }
+                              className={cn(
+                                'px-3 py-2 bg-muted rounded-md text-xs font-medium flex items-center justify-between group',
+                                editMode
+                                  ? 'cursor-pointer hover:bg-muted/70 transition-colors'
+                                  : 'opacity-60 cursor-not-allowed'
+                              )}
+                            >
+                              <span>{sender}</span>
+                              {editMode && (
+                                <svg
+                                  className='w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M9 5l7 7-7 7'
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Side Senders */}
+                    <div className='border border-border rounded-lg p-3 bg-primary/5'>
+                      <h3 className='text-xs font-semibold text-foreground mb-2 flex items-center'>
+                        <svg
+                          className='w-3 h-3 mr-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M9 5l7 7-7 7'
+                          />
+                        </svg>
+                        Right Side
+                      </h3>
+                      <div className='space-y-2'>
+                        {rightSenders.length === 0 ? (
+                          <p className='text-xs text-muted-foreground italic'>
+                            No participants
+                          </p>
+                        ) : (
+                          rightSenders.map((sender) => (
+                            <div
+                              key={sender}
+                              onClick={() =>
+                                editMode && moveSenderToLeft(sender)
+                              }
+                              className={cn(
+                                'px-3 py-2 bg-primary/20 rounded-md text-xs font-medium flex items-center justify-between group',
+                                editMode
+                                  ? 'cursor-pointer hover:bg-primary/30 transition-colors'
+                                  : 'opacity-60 cursor-not-allowed'
+                              )}
+                            >
+                              {editMode && (
+                                <svg
+                                  className='w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M15 19l-7-7 7-7'
+                                  />
+                                </svg>
+                              )}
+                              <span>{sender}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rename Participants */}
+                <div className='mt-6 border-t border-border pt-6'>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Rename Participants
+                  </label>
+                  <p className='text-xs text-muted-foreground mb-3'>
+                    {editMode
+                      ? 'Change participant names. Original name → New name'
+                      : 'Participant name mappings (click Edit to change)'}
+                  </p>
+
+                  <div className='space-y-2'>
+                    {[...leftSenders, ...rightSenders].map((sender) => {
+                      const originalName =
+                        Object.keys(nameMapping).find(
+                          (key) => nameMapping[key] === sender
+                        ) || sender;
+                      const hasBeenRenamed =
+                        nameMapping[originalName] !== undefined;
+
+                      return (
+                        <div
+                          key={sender}
+                          className='flex items-center gap-2 p-2 bg-muted/30 rounded-lg'
+                        >
+                          <div className='flex-1 flex items-center gap-2'>
+                            {hasBeenRenamed && (
+                              <>
+                                <span className='text-xs text-muted-foreground line-through'>
+                                  {originalName}
+                                </span>
+                                <svg
+                                  className='w-3 h-3 text-muted-foreground'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M9 5l7 7-7 7'
+                                  />
+                                </svg>
+                              </>
+                            )}
+                            <Input
+                              key={sender}
+                              defaultValue={sender}
+                              onBlur={(e) => {
+                                if (editMode) {
+                                  const newName = e.target.value.trim();
+                                  if (newName && newName !== sender) {
+                                    renameSender(sender, newName);
+                                  }
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                              disabled={!editMode}
+                              className={cn(
+                                'text-xs h-8',
+                                !editMode && 'opacity-60 cursor-not-allowed'
+                              )}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Side - Chat Display */}

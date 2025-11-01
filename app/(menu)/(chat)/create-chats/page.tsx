@@ -31,6 +31,7 @@ export default function CreateChats() {
   const [chatTitle, setChatTitle] = useState('');
   const [leftSenders, setLeftSenders] = useState<string[]>([]);
   const [rightSenders, setRightSenders] = useState<string[]>([]);
+  const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
 
   const saveChat = async () => {
     if (!rawChat.trim() || parsedMessages.length === 0) {
@@ -54,6 +55,11 @@ export default function CreateChats() {
         body: JSON.stringify({
           title: chatTitle,
           rawText: rawChat,
+          senderPositions: {
+            left: leftSenders,
+            right: rightSenders,
+          },
+          nameMapping,
         }),
       });
 
@@ -75,8 +81,10 @@ export default function CreateChats() {
   };
 
   // Parse WhatsApp/Telegram/other chat formats
-  const parseChat = () => {
-    if (!rawChat.trim()) {
+  const parseChat = (textToParse?: string) => {
+    const chatText = textToParse ?? rawChat;
+
+    if (!chatText.trim()) {
       toast.error('Please paste a chat first');
       return;
     }
@@ -87,7 +95,7 @@ export default function CreateChats() {
     const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
     let match;
 
-    while ((match = whatsappRegex.exec(rawChat)) !== null) {
+    while ((match = whatsappRegex.exec(chatText)) !== null) {
       messages.push({
         id: Math.random().toString(36).substr(2, 9),
         timestamp: match[1].trim(),
@@ -104,7 +112,7 @@ export default function CreateChats() {
       const telegramRegex =
         /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
 
-      while ((match = telegramRegex.exec(rawChat)) !== null) {
+      while ((match = telegramRegex.exec(chatText)) !== null) {
         messages.push({
           id: Math.random().toString(36).substr(2, 9),
           sender: match[1].trim(),
@@ -119,7 +127,7 @@ export default function CreateChats() {
 
     // If Telegram didn't work, try simple format: Name\ntimestamp\nmessage
     if (messages.length === 0) {
-      const lines = rawChat.split('\n').filter((line) => line.trim());
+      const lines = chatText.split('\n').filter((line) => line.trim());
 
       for (let i = 0; i < lines.length; i++) {
         // Look for timestamp pattern (dates with commas or slashes)
@@ -202,6 +210,7 @@ export default function CreateChats() {
     setChatTitle('');
     setLeftSenders([]);
     setRightSenders([]);
+    setNameMapping({});
     toast.success('Chat cleared');
   };
 
@@ -213,6 +222,39 @@ export default function CreateChats() {
   const moveSenderToLeft = (sender: string) => {
     setRightSenders(rightSenders.filter((s) => s !== sender));
     setLeftSenders([...leftSenders, sender]);
+  };
+
+  const renameSender = (originalName: string, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('Name cannot be empty');
+      return;
+    }
+
+    // Update name mapping
+    setNameMapping((prev) => ({
+      ...prev,
+      [originalName]: newName.trim(),
+    }));
+
+    // Replace all occurrences in rawChat
+    const updatedChat = rawChat.replace(
+      new RegExp(`\\b${originalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'),
+      newName.trim()
+    );
+    setRawChat(updatedChat);
+
+    // Update sender lists
+    setLeftSenders((prev) =>
+      prev.map((s) => (s === originalName ? newName.trim() : s))
+    );
+    setRightSenders((prev) =>
+      prev.map((s) => (s === originalName ? newName.trim() : s))
+    );
+
+    // Re-parse the chat to update messages with the updated text
+    parseChat(updatedChat);
+
+    toast.success(`Renamed "${originalName}" to "${newName}"`);
   };
 
   const handleMessageEdit = (id: string) => {
@@ -303,7 +345,7 @@ export default function CreateChats() {
                 onChange={(e) => setRawChat(e.target.value)}
                 placeholder='WhatsApp: [28/10/25, 12:48:08 PM] John Doe: Hello there!&#10;Telegram: John Doe, [20 Aug 2025 at 1:10:46 PM]: Hello there!&#10;Other: Name on one line, timestamp next, then message'
                 className={cn(
-                  'min-h-[250px] font-mono text-sm text-muted-foreground grow',
+                  'min-h-[200px] font-mono text-sm text-muted-foreground grow',
                   selectedMessage &&
                     editMode &&
                     'bg-primary/10 ring-2 ring-primary'
@@ -319,7 +361,7 @@ export default function CreateChats() {
                   Clear
                 </Button>
                 <Button
-                  onClick={parseChat}
+                  onClick={() => parseChat()}
                   className='flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 cursor-pointer'
                 >
                   Parse Chat
@@ -452,6 +494,71 @@ export default function CreateChats() {
                         )}
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Rename Participants */}
+                <div className='mt-6 border-t border-border pt-6'>
+                  <label className='text-sm font-medium text-foreground mb-2 block'>
+                    Rename Participants
+                  </label>
+                  <p className='text-xs text-muted-foreground mb-3'>
+                    Change participant names. Original name → New name
+                  </p>
+
+                  <div className='space-y-2'>
+                    {[...leftSenders, ...rightSenders].map((sender, index) => {
+                      const originalName = Object.keys(nameMapping).find(
+                        (key) => nameMapping[key] === sender
+                      ) || sender;
+                      const hasBeenRenamed = nameMapping[originalName] !== undefined;
+
+                      return (
+                        <div
+                          key={`rename-${index}-${sender}`}
+                          className='flex items-center gap-2 p-2 bg-muted/30 rounded-lg'
+                        >
+                          <div className='flex-1 flex items-center gap-2'>
+                            {hasBeenRenamed && (
+                              <>
+                                <span className='text-xs text-muted-foreground line-through'>
+                                  {originalName}
+                                </span>
+                                <svg
+                                  className='w-3 h-3 text-muted-foreground'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M9 5l7 7-7 7'
+                                  />
+                                </svg>
+                              </>
+                            )}
+                            <Input
+                              key={`input-${index}-${sender}`}
+                              defaultValue={sender}
+                              onBlur={(e) => {
+                                const newName = e.target.value.trim();
+                                if (newName && newName !== sender) {
+                                  renameSender(sender, newName);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                              className='text-xs h-8'
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

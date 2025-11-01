@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { title, rawText } = body;
+    const { title, rawText, senderPositions, nameMapping } = body;
 
     if (!title || !rawText) {
       return NextResponse.json(
@@ -34,6 +34,8 @@ export async function POST(request: Request) {
       data: {
         title,
         rawText,
+        senderPositions: senderPositions || null,
+        nameMapping: nameMapping || null,
         userId: session.user.id,
       },
     });

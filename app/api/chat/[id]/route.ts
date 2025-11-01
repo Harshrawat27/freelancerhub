@@ -65,11 +65,11 @@ export async function PUT(
       );
     }
 
-    const { title, rawText } = body;
+    const { title, rawText, senderPositions, nameMapping } = body;
 
-    if (!title && !rawText) {
+    if (!title && !rawText && !senderPositions && !nameMapping) {
       return NextResponse.json(
-        { error: 'At least one field (title or rawText) is required' },
+        { error: 'At least one field to update is required' },
         { status: 400 }
       );
     }
@@ -94,6 +94,8 @@ export async function PUT(
       data: {
         ...(title && { title }),
         ...(rawText && { rawText }),
+        ...(senderPositions !== undefined && { senderPositions }),
+        ...(nameMapping !== undefined && { nameMapping }),
       },
     });
 
