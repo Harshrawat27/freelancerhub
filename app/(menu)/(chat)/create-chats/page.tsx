@@ -16,6 +16,10 @@ interface Message {
   isRedacted?: boolean;
   originalIndex?: number;
   originalLength?: number;
+  replyTo?: {
+    sender: string;
+    messageId: string;
+  };
 }
 
 export default function CreateChats() {
@@ -23,7 +27,10 @@ export default function CreateChats() {
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const [replyMode, setReplyMode] = useState(false);
+  const [replySourceId, setReplySourceId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Parse WhatsApp/Telegram/other chat formats
   const parseChat = () => {
@@ -39,14 +46,30 @@ export default function CreateChats() {
     let match;
 
     while ((match = whatsappRegex.exec(rawChat)) !== null) {
+      let messageText = match[3].trim();
+      let replyTo = undefined;
+
+      // Check for reply syntax: [REPLY_TO:SenderName]
+      const replyMatch = messageText.match(/^\[REPLY_TO:([^\]]+)\]\s*/);
+      if (replyMatch) {
+        const replySender = replyMatch[1].trim();
+        messageText = messageText.substring(replyMatch[0].length);
+        // Find the message from this sender
+        const replyToMsg = messages.find((m) => m.sender === replySender);
+        if (replyToMsg) {
+          replyTo = { sender: replySender, messageId: replyToMsg.id };
+        }
+      }
+
       messages.push({
         id: Math.random().toString(36).substr(2, 9),
         timestamp: match[1].trim(),
         sender: match[2].trim(),
-        message: match[3].trim(),
+        message: messageText,
         isRedacted: false,
         originalIndex: match.index,
         originalLength: match[0].length,
+        replyTo,
       });
     }
 
@@ -56,14 +79,30 @@ export default function CreateChats() {
         /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
 
       while ((match = telegramRegex.exec(rawChat)) !== null) {
+        let messageText = match[3].trim();
+        let replyTo = undefined;
+
+        // Check for reply syntax: [REPLY_TO:SenderName]
+        const replyMatch = messageText.match(/^\[REPLY_TO:([^\]]+)\]\s*/);
+        if (replyMatch) {
+          const replySender = replyMatch[1].trim();
+          messageText = messageText.substring(replyMatch[0].length);
+          // Find the message from this sender
+          const replyToMsg = messages.find((m) => m.sender === replySender);
+          if (replyToMsg) {
+            replyTo = { sender: replySender, messageId: replyToMsg.id };
+          }
+        }
+
         messages.push({
           id: Math.random().toString(36).substr(2, 9),
           sender: match[1].trim(),
           timestamp: match[2].trim(),
-          message: match[3].trim(),
+          message: messageText,
           isRedacted: false,
           originalIndex: match.index,
           originalLength: match[0].length,
+          replyTo,
         });
       }
     }
@@ -129,35 +168,103 @@ export default function CreateChats() {
     setParsedMessages([]);
     setEditMode(false);
     setSelectedMessage(null);
+    setReplyMode(false);
+    setReplySourceId(null);
     toast.success('Chat cleared');
   };
 
-  const handleMessageEdit = (id: string) => {
+  const handleMessageClick = (id: string) => {
     if (!editMode) return;
 
-    const message = parsedMessages.find((msg) => msg.id === id);
-    if (
-      !message ||
-      message.originalIndex === undefined ||
-      message.originalLength === undefined
-    ) {
-      return;
-    }
+    // If in reply mode, handle reply linking
+    if (replyMode) {
+      if (!replySourceId) {
+        // First click - select source message to reply to
+        setReplySourceId(id);
+        toast.info('Now click the message that replies to this one');
+      } else if (replySourceId === id) {
+        // Clicked same message - deselect
+        setReplySourceId(null);
+        toast.info('Reply selection cancelled');
+      } else {
+        // Second click - link the reply
+        const sourceMsg = parsedMessages.find((m) => m.id === replySourceId);
+        const replyMsg = parsedMessages.find((m) => m.id === id);
 
-    // Focus textarea and select the message text
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(
-        message.originalIndex,
-        message.originalIndex + message.originalLength
-      );
-      textareaRef.current.scrollTop =
-        (message.originalIndex / rawChat.length) *
-        textareaRef.current.scrollHeight;
-    }
+        if (sourceMsg && replyMsg) {
+          // Update raw text to include reply syntax
+          const replyPrefix = `[REPLY_TO:${sourceMsg.sender}] `;
 
-    setSelectedMessage(id);
-    // toast.info('Message selected in textarea - edit and parse again!');
+          if (replyMsg.originalIndex !== undefined) {
+            // Find the position after "Name: " or "]: "
+            const lines = rawChat.split('\n');
+            let updatedChat = rawChat;
+
+            // For Telegram format: "Name, [timestamp]: "
+            const telegramHeaderRegex = new RegExp(
+              `${replyMsg.sender.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},\\s*\\[${replyMsg.timestamp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]:\\s*`
+            );
+            // For WhatsApp format: "[timestamp] Name: "
+            const whatsappHeaderRegex = new RegExp(
+              `\\[${replyMsg.timestamp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\s*${replyMsg.sender.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\s*`
+            );
+
+            if (updatedChat.match(telegramHeaderRegex)) {
+              updatedChat = updatedChat.replace(
+                telegramHeaderRegex,
+                (match) => match + replyPrefix
+              );
+            } else if (updatedChat.match(whatsappHeaderRegex)) {
+              updatedChat = updatedChat.replace(
+                whatsappHeaderRegex,
+                (match) => match + replyPrefix
+              );
+            }
+
+            setRawChat(updatedChat);
+            toast.success('Reply linked! Parse again to see changes');
+          }
+        }
+
+        setReplySourceId(null);
+      }
+    } else {
+      // Regular edit mode - select text in textarea
+      const message = parsedMessages.find((msg) => msg.id === id);
+      if (
+        !message ||
+        message.originalIndex === undefined ||
+        message.originalLength === undefined
+      ) {
+        return;
+      }
+
+      // Focus textarea and select the message text
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(
+          message.originalIndex,
+          message.originalIndex + message.originalLength
+        );
+        textareaRef.current.scrollTop =
+          (message.originalIndex / rawChat.length) *
+          textareaRef.current.scrollHeight;
+      }
+
+      setSelectedMessage(id);
+    }
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const element = messageRefs.current[messageId];
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight briefly
+      element.style.backgroundColor = 'rgba(var(--primary), 0.2)';
+      setTimeout(() => {
+        element.style.backgroundColor = '';
+      }, 1000);
+    }
   };
 
   const shareChat = () => {
@@ -301,8 +408,38 @@ export default function CreateChats() {
                       </svg>
                       Download
                     </Button>
+                    {editMode && (
+                      <Button
+                        onClick={() => {
+                          setReplyMode(!replyMode);
+                          setReplySourceId(null);
+                        }}
+                        size='sm'
+                        variant={replyMode ? 'default' : 'outline'}
+                        className='text-xs cursor-pointer'
+                      >
+                        <svg
+                          className='w-4 h-4 mr-1'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6'
+                          />
+                        </svg>
+                        Reply
+                      </Button>
+                    )}
                     <Button
-                      onClick={() => setEditMode(!editMode)}
+                      onClick={() => {
+                        setEditMode(!editMode);
+                        setReplyMode(false);
+                        setReplySourceId(null);
+                      }}
                       size='sm'
                       variant='outline'
                       className='text-xs cursor-pointer'
@@ -341,10 +478,12 @@ export default function CreateChats() {
                   parsedMessages.map((msg) => {
                     const position = getSenderColor(msg.sender);
                     const isLeft = position === 'left';
+                    const isReplySource = replySourceId === msg.id;
 
                     return (
                       <div
                         key={msg.id}
+                        ref={(el) => (messageRefs.current[msg.id] = el)}
                         className={cn(
                           'flex',
                           isLeft ? 'justify-start' : 'justify-end'
@@ -355,7 +494,7 @@ export default function CreateChats() {
                             'max-w-[75%] group relative',
                             editMode && 'cursor-pointer'
                           )}
-                          onClick={() => handleMessageEdit(msg.id)}
+                          onClick={() => handleMessageClick(msg.id)}
                         >
                           <div
                             className={cn(
@@ -365,11 +504,46 @@ export default function CreateChats() {
                                 : 'bg-primary text-primary-foreground',
                               selectedMessage === msg.id &&
                                 editMode &&
+                                !replyMode &&
                                 'ring-2 ring-gray-600 dark:ring-gray-400',
                               editMode &&
-                                'hover:ring-2 hover:ring-gray-500 dark:hover:ring-gray-500'
+                                !replyMode &&
+                                'hover:ring-2 hover:ring-gray-500 dark:hover:ring-gray-500',
+                              isReplySource &&
+                                replyMode &&
+                                'ring-2 ring-blue-500 dark:ring-blue-400',
+                              replyMode &&
+                                !isReplySource &&
+                                'hover:ring-2 hover:ring-blue-300 dark:hover:ring-blue-300'
                             )}
                           >
+                            {/* Reply Reference */}
+                            {msg.replyTo && (
+                              <div
+                                className={cn(
+                                  'mb-2 p-2 rounded border-l-2 cursor-pointer',
+                                  isLeft
+                                    ? 'bg-muted/30 border-l-primary'
+                                    : 'bg-primary-foreground/10 border-l-primary-foreground'
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  scrollToMessage(msg.replyTo!.messageId);
+                                }}
+                              >
+                                <p
+                                  className={cn(
+                                    'text-xs font-medium opacity-70',
+                                    isLeft
+                                      ? 'text-primary'
+                                      : 'text-primary-foreground'
+                                  )}
+                                >
+                                  ↩ Replying to {msg.replyTo.sender}
+                                </p>
+                              </div>
+                            )}
+
                             <p className='font-medium text-sm mb-1 opacity-50'>
                               {msg.sender}
                             </p>
