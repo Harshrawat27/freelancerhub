@@ -80,13 +80,97 @@ export default function CreateChats() {
     }
   };
 
+  // Convert website format to WhatsApp format
+  const convertWebsiteToWhatsApp = (text: string): string => {
+    const lines = text.split('\n');
+    const timestampPattern = /^\d{1,2}\s+\w+,\s+\d{1,2}:\d{2}$/;
+    const convertedMessages: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (timestampPattern.test(line)) {
+        // Look backwards for the sender name (skip "Profile Image" and single letter initials)
+        let sender = 'Unknown';
+        for (let k = i - 1; k >= 0; k--) {
+          const prevLine = lines[k].trim();
+          // Skip empty lines, "Profile Image", and single uppercase letters (A-Z)
+          if (prevLine &&
+              prevLine !== 'Profile Image' &&
+              prevLine.length > 0 &&
+              !/^[A-Z]$/.test(prevLine)) {
+            sender = prevLine;
+            break;
+          }
+        }
+
+        const timestamp = line;
+
+        // Collect message lines until we hit another name/timestamp pattern
+        let message = '';
+        for (let j = i + 1; j < lines.length; j++) {
+          const nextLine = lines[j].trim();
+
+          // Stop if we hit a timestamp or profile image marker
+          if (timestampPattern.test(nextLine) || nextLine === 'Profile Image') {
+            break;
+          }
+
+          // If we hit a single uppercase letter, check if it's followed by a sender name/timestamp
+          if (/^[A-Z]$/.test(nextLine)) {
+            // Look ahead to see if there's a timestamp coming (within next 3 lines)
+            let hasTimestampAhead = false;
+            for (let k = j + 1; k < Math.min(j + 4, lines.length); k++) {
+              const aheadLine = lines[k].trim();
+              if (timestampPattern.test(aheadLine)) {
+                hasTimestampAhead = true;
+                break;
+              }
+            }
+            if (hasTimestampAhead) {
+              break;
+            }
+          }
+
+          // Skip empty lines, single letters, and file attachments
+          if (nextLine &&
+              !/^[A-Z]$/.test(nextLine) &&
+              !nextLine.includes('File') &&
+              !nextLine.includes('Please note:') &&
+              !nextLine.includes('cannot be scanned') &&
+              !nextLine.includes('Learn more') &&
+              !nextLine.match(/^\([\d\.]+ (MB|KB|GB)\)$/) &&
+              !nextLine.match(/\.(mov|mp4|jpg|png|pdf)$/i)) {
+            message += (message ? ' ' : '') + nextLine;
+          }
+        }
+
+        if (message && sender && sender !== 'Profile Image') {
+          // Convert to WhatsApp format: [timestamp] sender: message
+          convertedMessages.push(`[${timestamp}] ${sender}: ${message.trim()}`);
+        }
+      }
+    }
+
+    return convertedMessages.length > 0 ? convertedMessages.join('\n') : text;
+  };
+
   // Parse WhatsApp/Telegram/other chat formats
   const parseChat = (textToParse?: string) => {
-    const chatText = textToParse ?? rawChat;
+    let chatText = textToParse ?? rawChat;
 
     if (!chatText.trim()) {
       toast.error('Please paste a chat first');
       return;
+    }
+
+    // Check if it's website format and convert to WhatsApp format
+    const websiteTimestampPattern = /^\d{1,2}\s+\w+,\s+\d{1,2}:\d{2}$/m;
+    if (websiteTimestampPattern.test(chatText)) {
+      const convertedText = convertWebsiteToWhatsApp(chatText);
+      chatText = convertedText;
+      // Update rawChat with converted text so click-to-edit works
+      setRawChat(convertedText);
     }
 
     let messages: Message[] = [];
@@ -122,51 +206,6 @@ export default function CreateChats() {
           originalIndex: match.index,
           originalLength: match[0].length,
         });
-      }
-    }
-
-    // If Telegram didn't work, try simple format: Name\ntimestamp\nmessage
-    if (messages.length === 0) {
-      const lines = chatText.split('\n').filter((line) => line.trim());
-
-      for (let i = 0; i < lines.length; i++) {
-        // Look for timestamp pattern (dates with commas or slashes)
-        const timestampPattern =
-          /\d{1,2}\s+\w+,?\s+\d{1,2}:\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}/;
-
-        if (timestampPattern.test(lines[i])) {
-          // Previous line should be the name
-          const sender = i > 0 ? lines[i - 1].trim() : 'Unknown';
-          const timestamp = lines[i].trim();
-
-          // Next lines until another timestamp are the message
-          let message = '';
-          for (let j = i + 1; j < lines.length; j++) {
-            if (timestampPattern.test(lines[j])) break;
-            if (
-              lines[j].trim() &&
-              !lines[j].includes('Profile Image') &&
-              lines[j].trim().length > 1
-            ) {
-              message += (message ? ' ' : '') + lines[j].trim();
-            }
-          }
-
-          if (
-            message &&
-            sender !== 'Me' &&
-            sender !== 'Profile Image' &&
-            sender !== 'Replied'
-          ) {
-            messages.push({
-              id: Math.random().toString(36).substr(2, 9),
-              sender,
-              timestamp,
-              message,
-              isRedacted: false,
-            });
-          }
-        }
       }
     }
 
