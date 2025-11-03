@@ -67,11 +67,11 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className='rounded-md border border-border bg-secondary shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+      <div className='rounded-md border border-border bg-secondary shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] overflow-clip'>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className='hover:bg-transparent'>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>

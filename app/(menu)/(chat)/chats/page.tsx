@@ -36,17 +36,18 @@ export default function Chats() {
       <Sidebar />
       <main className='ml-[270px] p-6'>
         <Topbar pageName='Chats' />
-        <p className='text-muted-foreground mt-2 mb-6'>
+        {/* <p className='text-muted-foreground mt-2 mb-6'>
           View and manage all your chats
-        </p>
-
-        {loading ? (
-          <div className='flex items-center justify-center h-64'>
-            <div className='text-muted-foreground'>Loading chats...</div>
-          </div>
-        ) : (
-          <DataTable columns={columns} data={chats} />
-        )}
+        </p> */}
+        <div className='mt-6'>
+          {loading ? (
+            <div className='flex items-center justify-center h-64'>
+              <div className='text-muted-foreground'>Loading chats...</div>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={chats} />
+          )}
+        </div>
       </main>
     </div>
   );

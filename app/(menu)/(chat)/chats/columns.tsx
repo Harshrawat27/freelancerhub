@@ -31,7 +31,9 @@ export const columns: ColumnDef<Chat>[] = [
     },
     cell: ({ row }) => {
       return (
-        <div className='font-medium text-foreground'>{row.getValue('title')}</div>
+        <div className='font-medium text-foreground'>
+          {row.getValue('title')}
+        </div>
       );
     },
   },

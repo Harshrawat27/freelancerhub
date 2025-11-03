@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 /* Custom variant for dark mode */
 @custom-variant dark (&:is(.dark *));
@@ -52,7 +52,7 @@
 }
 
 /* Light mode colors */
-:root {
+/* :root {
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
@@ -85,10 +85,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
+} */
 
 /* Dark mode colors */
-.dark {
+/* .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
@@ -120,6 +120,37 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}   */
+
+:root {
+  --background: #b0afaf;
+  --foreground: #121212;
+  --primary: #ee575a;
+  --primary-foreground: #ffffff;
+  --secondary: #bebebe;
+  --secondary-foreground: #121212;
+  --muted: #bebebe;
+  --muted-foreground: #121212;
+  --accent: #bebebe;
+  --accent-foreground: #121212;
+  --border: rgba(18, 18, 18, 0.2);
+  --ring: #ee575a;
+}
+
+/* Dark mode colors */
+.dark {
+  --background: #161616;
+  --foreground: #b3b3b3;
+  --primary: #ee575a;
+  --primary-foreground: #ffffff;
+  --secondary: #242426;
+  --secondary-foreground: #b3b3b3;
+  --muted: #242426;
+  --muted-foreground: #b3b3b3;
+  --accent: #242426;
+  --accent-foreground: #b3b3b3;
+  --border: rgba(179, 179, 179, 0.2);
+  --ring: #ee575a;
 }
 
 @layer base {
