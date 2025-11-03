@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import Topbar from '@/components/Topbar';
 
 interface Message {
   id: string;
@@ -76,6 +77,14 @@ export default function SharedChatPage({
     savedPositions?: { left: string[]; right: string[] } | null
   ) => {
     let messages: Message[] = [];
+
+    // Check if this is website format and convert to WhatsApp format first
+    const websiteTimestampPattern = /^\d{1,2}\s+\w+,\s+\d{1,2}:\d{2}$/m;
+    if (websiteTimestampPattern.test(chatText)) {
+      chatText = convertWebsiteToWhatsApp(chatText);
+    }
+
+    // Try WhatsApp format: [date, time] Name: Message
     const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
     let match;
 
@@ -88,7 +97,98 @@ export default function SharedChatPage({
       });
     }
 
+    // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
+    if (messages.length === 0) {
+      const telegramRegex =
+        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
+
+      while ((match = telegramRegex.exec(chatText)) !== null) {
+        messages.push({
+          id: Math.random().toString(36).substr(2, 9),
+          sender: match[1].trim(),
+          timestamp: match[2].trim(),
+          message: match[3].trim(),
+        });
+      }
+    }
+
     setParsedMessages(messages);
+  };
+
+  const convertWebsiteToWhatsApp = (text: string): string => {
+    const lines = text.split('\n');
+    const timestampPattern = /^\d{1,2}\s+\w+,\s+\d{1,2}:\d{2}$/;
+    const convertedMessages: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (timestampPattern.test(line)) {
+        const timestamp = line;
+
+        // Look backwards for sender name (skip Profile Image and single letters)
+        let sender = 'Unknown';
+        for (let k = i - 1; k >= 0; k--) {
+          const prevLine = lines[k].trim();
+          if (
+            prevLine &&
+            prevLine !== 'Profile Image' &&
+            prevLine.length > 0 &&
+            !/^[A-Z]$/.test(prevLine)
+          ) {
+            sender = prevLine;
+            break;
+          }
+        }
+
+        // Collect message lines
+        let message = '';
+        for (let j = i + 1; j < lines.length; j++) {
+          const nextLine = lines[j].trim();
+
+          // Stop if we hit next timestamp or Profile Image
+          if (timestampPattern.test(nextLine) || nextLine === 'Profile Image') {
+            break;
+          }
+
+          // Look ahead when hitting single letter to check if it's start of next message
+          if (/^[A-Z]$/.test(nextLine)) {
+            let hasTimestampAhead = false;
+            for (let k = j + 1; k < Math.min(j + 4, lines.length); k++) {
+              const aheadLine = lines[k].trim();
+              if (timestampPattern.test(aheadLine)) {
+                hasTimestampAhead = true;
+                break;
+              }
+            }
+            if (hasTimestampAhead) {
+              break;
+            }
+          }
+
+          // Skip single letters, file attachments, and system messages
+          if (
+            nextLine &&
+            !/^[A-Z]$/.test(nextLine) &&
+            !nextLine.includes('File') &&
+            !nextLine.includes('Please note:') &&
+            !nextLine.includes('cannot be scanned') &&
+            !nextLine.includes('Learn more') &&
+            !nextLine.match(/^\([\d\.]+ (MB|KB|GB)\)$/) &&
+            !nextLine.match(/\.(mov|mp4|jpg|png|pdf)$/i)
+          ) {
+            message += (message ? ' ' : '') + nextLine;
+          }
+        }
+
+        // Only add if we have a valid message and sender
+        if (message && sender && sender !== 'Profile Image') {
+          convertedMessages.push(`[${timestamp}] ${sender}: ${message.trim()}`);
+        }
+      }
+    }
+
+    return convertedMessages.length > 0 ? convertedMessages.join('\n') : text;
   };
 
   const getSenderPosition = (sender: string): 'left' | 'right' => {
@@ -124,12 +224,9 @@ export default function SharedChatPage({
   return (
     <div className='min-h-screen bg-background p-6'>
       <div className='max-w-4xl mx-auto'>
-        <h1 className='text-3xl font-bold text-foreground mb-2'>
-          {chat?.title}
-        </h1>
-        <p className='text-sm text-muted-foreground mb-6'>Shared chat</p>
+        <Topbar pageName={chat?.title || 'Loading...'} />
 
-        <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6'>
+        <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 mt-6'>
           <div className='space-y-4'>
             {parsedMessages.map((msg) => {
               const position = getSenderPosition(msg.sender);
@@ -138,7 +235,10 @@ export default function SharedChatPage({
               return (
                 <div
                   key={msg.id}
-                  className={cn('flex', isLeft ? 'justify-start' : 'justify-end')}
+                  className={cn(
+                    'flex',
+                    isLeft ? 'justify-start' : 'justify-end'
+                  )}
                 >
                   <div className={cn('max-w-[75%]')}>
                     <div

@@ -143,7 +143,10 @@ export default function ChatDetail({
     }
 
     // Add user
-    const updatedSharedWith = [...sharedWith, { email: validEmail, permission: 'viewer' }];
+    const updatedSharedWith = [
+      ...sharedWith,
+      { email: validEmail, permission: 'viewer' },
+    ];
     setSharedWith(updatedSharedWith);
     setShareEmail('');
 
@@ -866,7 +869,7 @@ export default function ChatDetail({
                       <DialogContent className='max-w-lg'>
                         {/* Loading line at top */}
                         {isSavingShare && (
-                          <div className='absolute top-0 left-0 right-0 h-1 bg-primary animate-pulse' />
+                          <div className='absolute top-0 left-0 right-0 h-1 bg-primary animate-pulse rounded-full' />
                         )}
 
                         <DialogHeader>
@@ -878,10 +881,12 @@ export default function ChatDetail({
                           </DialogDescription>
                         </DialogHeader>
 
-                        <div className={cn(
-                          'space-y-6 mt-4 transition-opacity duration-200',
-                          isSavingShare && 'opacity-50 pointer-events-none'
-                        )}>
+                        <div
+                          className={cn(
+                            'space-y-6 mt-4 transition-opacity duration-200',
+                            isSavingShare && 'opacity-50 pointer-events-none'
+                          )}
+                        >
                           {/* Add people */}
                           <div className='space-y-3'>
                             <label className='text-sm font-medium text-foreground'>
@@ -1014,22 +1019,33 @@ export default function ChatDetail({
                               <select
                                 value={linkAccess}
                                 onChange={async (e) => {
-                                  const newAccess = e.target.value as 'restricted' | 'anyone';
+                                  const newAccess = e.target.value as
+                                    | 'restricted'
+                                    | 'anyone';
                                   setLinkAccess(newAccess);
 
                                   // Save to database
                                   setIsSavingShare(true);
                                   try {
-                                    const response = await fetch(`/api/chat/${id}/share`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        isPublic: newAccess === 'anyone',
-                                        sharedWith: sharedWith.length > 0 ? sharedWith : null,
-                                      }),
-                                    });
+                                    const response = await fetch(
+                                      `/api/chat/${id}/share`,
+                                      {
+                                        method: 'PUT',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                          isPublic: newAccess === 'anyone',
+                                          sharedWith:
+                                            sharedWith.length > 0
+                                              ? sharedWith
+                                              : null,
+                                        }),
+                                      }
+                                    );
 
-                                    if (!response.ok) throw new Error('Failed to update');
+                                    if (!response.ok)
+                                      throw new Error('Failed to update');
                                     toast.success('Link access updated!');
                                   } catch (error) {
                                     toast.error('Failed to update link access');
