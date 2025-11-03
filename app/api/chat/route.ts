@@ -3,6 +3,40 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import prisma from '@/lib/prisma';
 
+// GET - Get all chats for the current user
+export async function GET() {
+  try {
+    const incomingHeaders = await headers();
+    const session = await auth.api.getSession({
+      headers: new Headers(incomingHeaders),
+    });
+
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized or user ID missing' },
+        { status: 401 }
+      );
+    }
+
+    const chats = await prisma.chat.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    return NextResponse.json(chats, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching chats:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch chats' },
+      { status: 500 }
+    );
+  }
+}
+
 // POST - Create a new chat
 export async function POST(request: Request) {
   try {
