@@ -115,6 +115,8 @@ model Chat {
   rawText         String   @db.Text
   senderPositions Json?
   nameMapping     Json?
+  isPublic        Boolean  @default(false)
+  sharedWith      Json?
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())

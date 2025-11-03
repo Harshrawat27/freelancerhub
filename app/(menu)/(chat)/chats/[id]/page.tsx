@@ -53,6 +53,7 @@ export default function ChatDetail({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSavingShare, setIsSavingShare] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [sharedWith, setSharedWith] = useState<
     { email: string; permission: string }[]
@@ -103,6 +104,14 @@ export default function ChatDetail({
           setNameMapping(data.nameMapping);
         }
 
+        // Load share settings
+        if (data.isPublic !== undefined) {
+          setLinkAccess(data.isPublic ? 'anyone' : 'restricted');
+        }
+        if (data.sharedWith) {
+          setSharedWith(data.sharedWith);
+        }
+
         // Parse the chat immediately
         parseChat(data.rawText, data.senderPositions);
       } catch (error) {
@@ -116,7 +125,7 @@ export default function ChatDetail({
     fetchChat();
   }, [id]);
 
-  const addSharedUser = () => {
+  const addSharedUser = async () => {
     // Validate email using Zod schema
     const result = emailSchema.safeParse(shareEmail.trim());
 
@@ -134,24 +143,98 @@ export default function ChatDetail({
     }
 
     // Add user
-    setSharedWith([...sharedWith, { email: validEmail, permission: 'viewer' }]);
+    const updatedSharedWith = [...sharedWith, { email: validEmail, permission: 'viewer' }];
+    setSharedWith(updatedSharedWith);
     setShareEmail('');
-    toast.success(`Shared with ${validEmail}`);
+
+    // Save to database
+    setIsSavingShare(true);
+    try {
+      const response = await fetch(`/api/chat/${id}/share`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPublic: linkAccess === 'anyone',
+          sharedWith: updatedSharedWith,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update');
+      toast.success(`Shared with ${validEmail}`);
+    } catch (error) {
+      toast.error('Failed to share');
+      setSharedWith(sharedWith); // Revert on error
+    } finally {
+      setIsSavingShare(false);
+    }
   };
 
-  const removeSharedUser = (email: string) => {
-    setSharedWith(sharedWith.filter((u) => u.email !== email));
-    toast.success('Access removed');
+  const removeSharedUser = async (email: string) => {
+    const updatedSharedWith = sharedWith.filter((u) => u.email !== email);
+    setSharedWith(updatedSharedWith);
+
+    // Save to database
+    setIsSavingShare(true);
+    try {
+      const response = await fetch(`/api/chat/${id}/share`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPublic: linkAccess === 'anyone',
+          sharedWith: updatedSharedWith.length > 0 ? updatedSharedWith : null,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update');
+      toast.success('Access removed');
+    } catch (error) {
+      toast.error('Failed to remove access');
+      setSharedWith(sharedWith); // Revert on error
+    } finally {
+      setIsSavingShare(false);
+    }
   };
 
   const updatePermission = (email: string, permission: string) => {
     setSharedWith(
       sharedWith.map((u) => (u.email === email ? { ...u, permission } : u))
     );
+    // Note: This just updates locally, will be saved when dialog closes or link access changes
+  };
+
+  const saveShareSettings = async () => {
+    if (!id) return;
+
+    setIsSavingShare(true);
+
+    try {
+      const response = await fetch(`/api/chat/${id}/share`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isPublic: linkAccess === 'anyone',
+          sharedWith: sharedWith.length > 0 ? sharedWith : null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update share settings');
+      }
+
+      await response.json();
+      toast.success('Share settings updated!');
+    } catch (error) {
+      console.error('Error saving share settings:', error);
+      toast.error('Failed to update share settings');
+    } finally {
+      setIsSavingShare(false);
+    }
   };
 
   const copyShareableLink = () => {
-    const link = `${window.location.origin}/chats/${id}`;
+    const link = `${window.location.origin}/share/${id}`;
     navigator.clipboard.writeText(link);
     toast.success('Link copied to clipboard!');
   };
@@ -781,6 +864,11 @@ export default function ChatDetail({
                         </Button>
                       </DialogTrigger>
                       <DialogContent className='max-w-lg'>
+                        {/* Loading line at top */}
+                        {isSavingShare && (
+                          <div className='absolute top-0 left-0 right-0 h-1 bg-primary animate-pulse' />
+                        )}
+
                         <DialogHeader>
                           <DialogTitle className='font-heading text-xl'>
                             Share Chat
@@ -790,7 +878,10 @@ export default function ChatDetail({
                           </DialogDescription>
                         </DialogHeader>
 
-                        <div className='space-y-6 mt-4'>
+                        <div className={cn(
+                          'space-y-6 mt-4 transition-opacity duration-200',
+                          isSavingShare && 'opacity-50 pointer-events-none'
+                        )}>
                           {/* Add people */}
                           <div className='space-y-3'>
                             <label className='text-sm font-medium text-foreground'>
@@ -922,11 +1013,31 @@ export default function ChatDetail({
                               </div>
                               <select
                                 value={linkAccess}
-                                onChange={(e) =>
-                                  setLinkAccess(
-                                    e.target.value as 'restricted' | 'anyone'
-                                  )
-                                }
+                                onChange={async (e) => {
+                                  const newAccess = e.target.value as 'restricted' | 'anyone';
+                                  setLinkAccess(newAccess);
+
+                                  // Save to database
+                                  setIsSavingShare(true);
+                                  try {
+                                    const response = await fetch(`/api/chat/${id}/share`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        isPublic: newAccess === 'anyone',
+                                        sharedWith: sharedWith.length > 0 ? sharedWith : null,
+                                      }),
+                                    });
+
+                                    if (!response.ok) throw new Error('Failed to update');
+                                    toast.success('Link access updated!');
+                                  } catch (error) {
+                                    toast.error('Failed to update link access');
+                                    setLinkAccess(linkAccess); // Revert on error
+                                  } finally {
+                                    setIsSavingShare(false);
+                                  }
+                                }}
                                 className='w-[130px] h-8 text-xs px-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer'
                               >
                                 <option value='restricted'>Restricted</option>
