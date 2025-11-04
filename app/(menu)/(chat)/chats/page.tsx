@@ -40,13 +40,7 @@ export default function Chats() {
           View and manage all your chats
         </p> */}
         <div className='mt-6'>
-          {loading ? (
-            <div className='flex items-center justify-center h-64'>
-              <div className='text-muted-foreground'>Loading chats...</div>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={chats} />
-          )}
+          <DataTable columns={columns} data={chats} loading={loading} />
         </div>
       </main>
     </div>

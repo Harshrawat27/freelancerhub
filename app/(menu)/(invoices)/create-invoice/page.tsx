@@ -19,6 +19,7 @@ import {
   type InvoiceLineItem,
 } from '@/lib/validations';
 import dynamic from 'next/dynamic';
+import { DatePicker } from '@/components/DatePicker';
 
 // Dynamically import InvoicePreview with no SSR to avoid DOMMatrix error
 const InvoicePreview = dynamic(() => import('@/components/InvoicePreview'), {
@@ -338,32 +339,28 @@ export default function CreateInvoice() {
                       />
                     </div>
                     <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                          Invoice Date <span className='text-red-500'>*</span>
-                        </label>
-                        <Input
-                          type='date'
-                          value={invoiceData.invoiceDate}
-                          onChange={(e) =>
-                            updateInvoiceData('invoiceDate', e.target.value)
-                          }
-                          className='text-sm'
-                        />
-                      </div>
-                      <div>
-                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                          Due Date <span className='text-red-500'>*</span>
-                        </label>
-                        <Input
-                          type='date'
-                          value={invoiceData.dueDate}
-                          onChange={(e) =>
-                            updateInvoiceData('dueDate', e.target.value)
-                          }
-                          className='text-sm'
-                        />
-                      </div>
+                      <DatePicker
+                        label={
+                          <>
+                            Invoice Date <span className='text-red-500'>*</span>
+                          </>
+                        }
+                        value={invoiceData.invoiceDate}
+                        onChange={(date) => updateInvoiceData('invoiceDate', date)}
+                        placeholder='Select invoice date'
+                        id='invoiceDate'
+                      />
+                      <DatePicker
+                        label={
+                          <>
+                            Due Date <span className='text-red-500'>*</span>
+                          </>
+                        }
+                        value={invoiceData.dueDate}
+                        onChange={(date) => updateInvoiceData('dueDate', date)}
+                        placeholder='Select due date'
+                        id='dueDate'
+                      />
                     </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>

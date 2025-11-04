@@ -561,7 +561,8 @@ export default function ChatDetail({
           {/* <div className='flex flex-col gap-4 overflow-y-auto'> */}
           <div className='flex flex-col overflow-y-auto'>
             {/* Raw Chat Text */}
-            <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] grow flex flex-col pb-0 rounded-b-none'>
+            {/* <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] grow flex flex-col pb-0 rounded-b-none'> */}
+            <div className='rounded-lg p-4 grow flex flex-col pb-0 rounded-b-none'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-2'>
                 {editMode ? 'Edit Chat' : 'Chat Source'}
               </h2>
@@ -605,7 +606,8 @@ export default function ChatDetail({
 
             {/* Title and Sender Assignment */}
             {parsedMessages.length > 0 && (
-              <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] pt-4 rounded-t-none'>
+              // <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] pt-4 rounded-t-none'>
+              <div className='rounded-lg p-4 pt-4 rounded-t-none'>
                 {/* Title Input */}
                 {/* <div className='mb-4'>
                   <label className='text-sm font-medium text-foreground mb-2 block'>

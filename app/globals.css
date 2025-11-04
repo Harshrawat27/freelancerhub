@@ -200,3 +200,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+.bg-popover {
+  background-color: var(--background);
+}

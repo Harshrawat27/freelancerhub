@@ -22,15 +22,18 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  loading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -63,6 +66,7 @@ export function DataTable<TData, TValue>({
             table.getColumn('title')?.setFilterValue(event.target.value)
           }
           className='max-w-sm'
+          disabled={loading}
         />
       </div>
 
@@ -88,7 +92,9 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableSkeleton rows={5} columns={columns.length} />
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -121,13 +127,13 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className='flex items-center justify-end space-x-2'>
         <div className='flex-1 text-sm text-muted-foreground'>
-          {table.getFilteredRowModel().rows.length} chat(s) found
+          {loading ? 'Loading...' : `${table.getFilteredRowModel().rows.length} chat(s) found`}
         </div>
         <Button
           variant='outline'
           size='sm'
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          disabled={loading || !table.getCanPreviousPage()}
         >
           Previous
         </Button>
@@ -135,7 +141,7 @@ export function DataTable<TData, TValue>({
           variant='outline'
           size='sm'
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          disabled={loading || !table.getCanNextPage()}
         >
           Next
         </Button>
