@@ -153,7 +153,7 @@ export default function CreateInvoice() {
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Form with Accordions */}
           <div className='flex flex-col gap-4 overflow-auto hide-scrollbar px-1'>
-            <div className='rounded-lg flex flex-col'>
+            <div className='rounded-lg flex flex-col pb-6'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-4'>
                 Invoice Details
               </h2>
@@ -162,7 +162,7 @@ export default function CreateInvoice() {
                 type='single'
                 collapsible
                 defaultValue='business'
-                className='space-y-2'
+                className='space-y-2 py-2'
               >
                 {/* Business Information */}
                 <AccordionItem
@@ -590,9 +590,9 @@ export default function CreateInvoice() {
           </div>
 
           {/* Right Side - Invoice Preview */}
-          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar px-1'>
+          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar relative'>
             <div className='rounded-lg flex flex-col'>
-              <div className='flex items-center justify-between mb-4'>
+              <div className='flex items-center justify-between pb-4 sticky top-0 z-10 bg-background'>
                 <h2 className='font-heading text-xl font-bold text-foreground'>
                   Invoice Preview
                 </h2>
@@ -619,195 +619,274 @@ export default function CreateInvoice() {
               </div>
 
               {/* Invoice Preview Content */}
-              <div className='bg-white text-black p-8 rounded-lg shadow-sm'>
-                {/* Header */}
-                <div className='flex justify-between items-start mb-8'>
-                  <div>
-                    <h1 className='text-3xl font-bold text-gray-800 mb-2'>
-                      INVOICE
-                    </h1>
-                    <p className='text-sm text-gray-600'>
-                      #{invoiceData.invoiceNumber}
-                    </p>
-                  </div>
-                  <div className='text-right'>
-                    <h2 className='text-xl font-bold text-gray-800'>
-                      {invoiceData.businessName || 'Your Business Name'}
-                    </h2>
-                    {invoiceData.businessEmail && (
-                      <p className='text-sm text-gray-600'>
-                        {invoiceData.businessEmail}
+              <div
+                className='bg-white text-black rounded-lg overflow-hidden shadow-lg'
+                style={{
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+                }}
+              >
+                {/* Colored Header Section */}
+                <div className='bg-[#ee575a] text-white p-5'>
+                  <div className='flex justify-between items-start flex-wrap gap-8'>
+                    {/* Company Info */}
+                    <div>
+                      <h1 className='text-3xl font-bold mb-3 leading-tight'>
+                        {invoiceData.businessName || 'Your Business'}
+                      </h1>
+                      <p className='opacity-95 leading-relaxed text-sm'>
+                        {invoiceData.businessEmail || 'hello@email.com'}
                       </p>
-                    )}
-                    {invoiceData.businessPhone && (
-                      <p className='text-sm text-gray-600'>
-                        {invoiceData.businessPhone}
-                      </p>
-                    )}
-                    {invoiceData.businessAddress && (
-                      <p className='text-sm text-gray-600 whitespace-pre-line mt-1'>
-                        {invoiceData.businessAddress}
-                      </p>
-                    )}
+                      {invoiceData.businessPhone && (
+                        <p className='opacity-95 leading-relaxed text-sm'>
+                          {invoiceData.businessPhone}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Invoice Amount */}
+                    <div className='text-right'>
+                      <div className='text-sm opacity-90 mb-2'>
+                        Invoice of (USD)
+                      </div>
+                      <div className='text-4xl font-bold'>
+                        ${invoiceData.total.toFixed(2)}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Bill To & Invoice Info */}
-                <div className='grid grid-cols-2 gap-8 mb-8'>
-                  <div>
-                    <h3 className='text-sm font-semibold text-gray-500 uppercase mb-2'>
-                      Bill To
-                    </h3>
-                    <p className='font-medium text-gray-800'>
-                      {invoiceData.clientName || 'Client Name'}
-                    </p>
-                    {invoiceData.clientEmail && (
-                      <p className='text-sm text-gray-600'>
-                        {invoiceData.clientEmail}
-                      </p>
-                    )}
-                    {invoiceData.clientPhone && (
-                      <p className='text-sm text-gray-600'>
-                        {invoiceData.clientPhone}
-                      </p>
-                    )}
-                    {invoiceData.clientAddress && (
-                      <p className='text-sm text-gray-600 whitespace-pre-line mt-1'>
-                        {invoiceData.clientAddress}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <div className='mb-3'>
-                      <h3 className='text-sm font-semibold text-gray-500 uppercase'>
-                        Invoice Date
+                {/* Invoice Body */}
+                <div className='pt-10 p-5'>
+                  {/* From and Billed To */}
+                  <div className='grid grid-cols-2 gap-10 mb-10'>
+                    {/* From */}
+                    <div>
+                      <h3 className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4'>
+                        From
                       </h3>
-                      <p className='text-gray-800'>
-                        {new Date(invoiceData.invoiceDate).toLocaleDateString()}
+                      <p className='font-normal text-gray-900 text-base mb-2'>
+                        {invoiceData.businessName || 'Your Business'}
                       </p>
+                      {invoiceData.businessAddress && (
+                        <p className='text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-1'>
+                          {invoiceData.businessAddress}
+                        </p>
+                      )}
                     </div>
-                    <div className='mb-3'>
-                      <h3 className='text-sm font-semibold text-gray-500 uppercase'>
-                        Due Date
+
+                    {/* Billed To */}
+                    <div>
+                      <h3 className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4'>
+                        Billed To
                       </h3>
-                      <p className='text-gray-800'>
-                        {new Date(invoiceData.dueDate).toLocaleDateString()}
+                      <p className='font-normal text-gray-900 text-base mb-2'>
+                        {invoiceData.clientName || 'Client Name'}
                       </p>
+                      {invoiceData.clientAddress && (
+                        <p className='text-sm text-gray-700 leading-relaxed whitespace-pre-line'>
+                          {invoiceData.clientAddress}
+                        </p>
+                      )}
+                      {invoiceData.clientPhone && (
+                        <p className='text-sm text-gray-700 mt-1'>
+                          {invoiceData.clientPhone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Meta Information Grid */}
+                  <div className='grid grid-cols-3 gap-5 p-4 bg-gray-50 rounded-xl mb-8'>
+                    <div>
+                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
+                        Invoice Number
+                      </div>
+                      <div className='text-sm text-gray-900 font-semibold'>
+                        {invoiceData.invoiceNumber}
+                      </div>
                     </div>
                     {invoiceData.poNumber && (
                       <div>
-                        <h3 className='text-sm font-semibold text-gray-500 uppercase'>
-                          PO Number
-                        </h3>
-                        <p className='text-gray-800'>{invoiceData.poNumber}</p>
+                        <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
+                          Reference
+                        </div>
+                        <div className='text-sm text-gray-900 font-semibold'>
+                          {invoiceData.poNumber}
+                        </div>
                       </div>
                     )}
+                    <div>
+                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
+                        Invoice Date
+                      </div>
+                      <div className='text-sm text-gray-900 font-semibold'>
+                        {new Date(invoiceData.invoiceDate).toLocaleDateString(
+                          'en-US',
+                          {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          }
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
+                        Due Date
+                      </div>
+                      <div className='text-sm text-gray-900 font-semibold'>
+                        {new Date(invoiceData.dueDate).toLocaleDateString(
+                          'en-US',
+                          {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          }
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Line Items Table */}
-                <div className='mb-8'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-b-2 border-gray-300'>
-                        <th className='text-left py-2 text-sm font-semibold text-gray-700'>
-                          Description
-                        </th>
-                        <th className='text-right py-2 text-sm font-semibold text-gray-700 w-20'>
-                          Qty
-                        </th>
-                        <th className='text-right py-2 text-sm font-semibold text-gray-700 w-24'>
-                          Rate
-                        </th>
-                        <th className='text-right py-2 text-sm font-semibold text-gray-700 w-28'>
-                          Amount
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoiceData.items.map((item) => (
-                        <tr key={item.id} className='border-b border-gray-200'>
-                          <td className='py-3 text-sm text-gray-800'>
-                            {item.description || 'Item description'}
-                          </td>
-                          <td className='py-3 text-sm text-gray-800 text-right'>
-                            {item.quantity}
-                          </td>
-                          <td className='py-3 text-sm text-gray-800 text-right'>
-                            ${item.rate.toFixed(2)}
-                          </td>
-                          <td className='py-3 text-sm text-gray-800 text-right font-medium'>
-                            ${item.amount.toFixed(2)}
-                          </td>
+                  {/* Subject Line */}
+                  {invoiceData.notes && (
+                    <div
+                      className='p-5 mb-8 rounded-xl'
+                      style={{ background: 'rgba(238, 87, 90, 0.08)' }}
+                    >
+                      <h3 className='text-sm text-gray-500 mb-2'>Notes</h3>
+                      <p className='text-base text-gray-900 font-normal'>
+                        {invoiceData.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Items Table */}
+                  <div className='mb-8'>
+                    <table className='w-full'>
+                      <thead className='bg-gray-50'>
+                        <tr>
+                          <th className='text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>
+                            Item Detail
+                          </th>
+                          <th
+                            className='text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
+                            style={{ width: '80px' }}
+                          >
+                            QTY
+                          </th>
+                          <th
+                            className='text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
+                            style={{ width: '120px' }}
+                          >
+                            Rate
+                          </th>
+                          <th
+                            className='text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
+                            style={{ width: '120px' }}
+                          >
+                            Amount
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {invoiceData.items.map((item, index) => (
+                          <tr
+                            key={item.id}
+                            className='border-t border-gray-200'
+                          >
+                            <td className='py-5 px-4'>
+                              <div className='font-semibold text-gray-900 mb-1'>
+                                Item {index + 1}
+                              </div>
+                              <div className='text-sm text-gray-600'>
+                                {item.description || 'Item description'}
+                              </div>
+                            </td>
+                            <td className='py-5 px-4 text-center text-sm text-gray-700'>
+                              {item.quantity}
+                            </td>
+                            <td className='py-5 px-4 text-right text-sm text-gray-700'>
+                              ${item.rate.toFixed(2)}
+                            </td>
+                            <td className='py-5 px-4 text-right text-sm text-gray-700'>
+                              ${item.amount.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* Totals */}
-                <div className='flex justify-end mb-8'>
-                  <div className='w-64'>
-                    <div className='flex justify-between py-2 text-sm'>
-                      <span className='text-gray-600'>Subtotal:</span>
-                      <span className='text-gray-800 font-medium'>
-                        ${invoiceData.subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                    {invoiceData.taxRate > 0 && (
-                      <div className='flex justify-between py-2 text-sm'>
-                        <span className='text-gray-600'>
-                          Tax ({invoiceData.taxRate}%):
-                        </span>
-                        <span className='text-gray-800 font-medium'>
-                          ${invoiceData.taxAmount.toFixed(2)}
-                        </span>
+                  {/* Totals Section */}
+                  <div className='flex justify-end mb-10'>
+                    <div className='w-80'>
+                      <div className='flex justify-between py-2 text-smpb-3 mb-3'>
+                        <span>Subtotal</span>
+                        <span>${invoiceData.subtotal.toFixed(2)}</span>
                       </div>
-                    )}
-                    {invoiceData.discount > 0 && (
-                      <div className='flex justify-between py-2 text-sm'>
-                        <span className='text-gray-600'>Discount:</span>
-                        <span className='text-gray-800 font-medium'>
-                          -${invoiceData.discount.toFixed(2)}
-                        </span>
+                      {invoiceData.taxRate > 0 && (
+                        <div className='flex justify-between py-2 text-sm'>
+                          <span>Tax ({invoiceData.taxRate}%)</span>
+                          <span>${invoiceData.taxAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {invoiceData.discount > 0 && (
+                        <div className='flex justify-between py-2 text-sm'>
+                          <span>Discount</span>
+                          <span>-${invoiceData.discount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className='flex justify-between pt-3 mt-3 border-t-2 border-[#ee575a] text-lg font-bold text-[#ee575a]'>
+                        <span>Total</span>
+                        <span>${invoiceData.total.toFixed(2)}</span>
                       </div>
-                    )}
-                    <div className='flex justify-between py-3 border-t-2 border-gray-300 mt-2'>
-                      <span className='text-gray-800 font-semibold'>
-                        Total:
-                      </span>
-                      <span className='text-gray-800 font-bold text-lg'>
-                        ${invoiceData.total.toFixed(2)}
-                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Notes & Terms */}
-                {(invoiceData.notes || invoiceData.terms) && (
-                  <div className='space-y-4'>
-                    {invoiceData.notes && (
-                      <div>
-                        <h3 className='text-sm font-semibold text-gray-700 mb-1'>
-                          Notes
-                        </h3>
-                        <p className='text-sm text-gray-600 whitespace-pre-line'>
-                          {invoiceData.notes}
-                        </p>
-                      </div>
-                    )}
-                    {invoiceData.terms && (
-                      <div>
-                        <h3 className='text-sm font-semibold text-gray-700 mb-1'>
-                          Terms & Conditions
-                        </h3>
-                        <p className='text-sm text-gray-600 whitespace-pre-line'>
-                          {invoiceData.terms}
-                        </p>
-                      </div>
+                {/* Footer */}
+                <div className='border-t-2 border-gray-100 px-10 py-8 bg-[#fafafa]'>
+                  <div className='text-center mb-5'>
+                    <h4 className='text-[#ee575a] font-semibold mb-2'>
+                      Thanks for the business.
+                    </h4>
+                    <p className='text-sm text-gray-600'>
+                      Date:{' '}
+                      {new Date(invoiceData.invoiceDate).toLocaleDateString(
+                        'en-US',
+                        {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        }
+                      )}{' '}
+                      | Due Date:{' '}
+                      {new Date(invoiceData.dueDate).toLocaleDateString(
+                        'en-US',
+                        {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        }
+                      )}
+                    </p>
+                  </div>
+                  <div className='mt-5 pt-5 border-t border-gray-200'>
+                    <h4 className='text-sm font-semibold text-gray-700 mb-2'>
+                      Terms & Conditions
+                    </h4>
+                    {invoiceData.terms ? (
+                      <p className='text-sm text-gray-600 leading-relaxed whitespace-pre-line'>
+                        {invoiceData.terms}
+                      </p>
+                    ) : (
+                      <p className='text-sm text-gray-600 leading-relaxed'>
+                        Please pay within 15 days of receiving this invoice.
+                      </p>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice #AB2324-01 - Panda, Inc</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .invoice-container {
+        max-width: 800px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .invoice-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        position: relative;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+
+      .company-info h1 {
+        font-size: 32px;
+        margin-bottom: 12px;
+        font-weight: 700;
+      }
+
+      .company-info p {
+        opacity: 0.95;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .invoice-amount {
+        text-align: right;
+      }
+
+      .invoice-amount .label {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 8px;
+      }
+
+      .invoice-amount .amount {
+        font-size: 36px;
+        font-weight: 700;
+      }
+
+      .invoice-body {
+        padding: 40px;
+      }
+
+      .invoice-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+
+      .detail-section h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b7280;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+
+      .detail-section p {
+        color: #1f2937;
+        line-height: 1.6;
+        margin-bottom: 4px;
+      }
+
+      .detail-section .company-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      .invoice-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 20px;
+        padding: 24px;
+        background: #f9fafb;
+        border-radius: 12px;
+        margin-bottom: 40px;
+      }
+
+      .meta-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .meta-item .label {
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .meta-item .value {
+        font-size: 14px;
+        color: #1f2937;
+        font-weight: 600;
+      }
+
+      .subject-line {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border-left: 4px solid #667eea;
+      }
+
+      .subject-line h3 {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+
+      .subject-line p {
+        font-size: 16px;
+        color: #1f2937;
+        font-weight: 600;
+      }
+
+      .items-table {
+        width: 100%;
+        margin-bottom: 30px;
+      }
+
+      .items-table thead {
+        background: #f9fafb;
+      }
+
+      .items-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        font-weight: 600;
+      }
+
+      .items-table th:last-child,
+      .items-table td:last-child {
+        text-align: right;
+      }
+
+      .items-table td {
+        padding: 20px 16px;
+        border-top: 1px solid #e5e7eb;
+        color: #1f2937;
+      }
+
+      .item-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #111827;
+      }
+
+      .item-description {
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .totals {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 40px;
+      }
+
+      .totals-content {
+        width: 300px;
+      }
+
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+      }
+
+      .total-row.subtotal {
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+      }
+
+      .total-row.grand-total {
+        border-top: 2px solid #667eea;
+        padding-top: 12px;
+        margin-top: 12px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .footer {
+        border-top: 2px solid #f3f4f6;
+        padding: 30px 40px;
+        background: #fafafa;
+      }
+
+      .footer-content {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .footer-content h4 {
+        color: #667eea;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .footer-content p {
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .terms {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .terms h4 {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #374151;
+      }
+
+      .terms p {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 640px) {
+        .invoice-header {
+          padding: 30px 20px;
+        }
+
+        .company-info h1 {
+          font-size: 24px;
+        }
+
+        .invoice-amount .amount {
+          font-size: 28px;
+        }
+
+        .invoice-body {
+          padding: 30px 20px;
+        }
+
+        .invoice-details {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+
+        .items-table {
+          font-size: 14px;
+        }
+
+        .items-table th,
+        .items-table td {
+          padding: 12px 8px;
+        }
+
+        .totals-content {
+          width: 100%;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+
+        .invoice-container {
+          box-shadow: none;
+          border-radius: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invoice-container">
+      <div class="invoice-header">
+        <div class="header-content">
+          <div class="company-info">
+            <h1>Panda, Inc</h1>
+            <p>www.website.com</p>
+            <p>hello@email.com</p>
+            <p>+91 00000 00000</p>
+          </div>
+          <div class="invoice-amount">
+            <div class="label">Invoice of (USD)</div>
+            <div class="amount">$4,950.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="invoice-body">
+        <div class="invoice-details">
+          <div class="detail-section">
+            <h3>From</h3>
+            <p class="company-name">Panda, Inc</p>
+            <p>Business address</p>
+            <p>City, State, IN - 000 000</p>
+            <p>TAX ID: 00XXXX1234X0XX</p>
+          </div>
+          <div class="detail-section">
+            <h3>Billed To</h3>
+            <p class="company-name">Company Name</p>
+            <p>Company address</p>
+            <p>City, Country - 00000</p>
+            <p>+0 (000) 123-4567</p>
+          </div>
+        </div>
+
+        <div class="invoice-meta">
+          <div class="meta-item">
+            <span class="label">Invoice Number</span>
+            <span class="value">#AB2324-01</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Reference</span>
+            <span class="value">INV-057</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Invoice Date</span>
+            <span class="value">01 Aug, 2023</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Due Date</span>
+            <span class="value">15 Aug, 2023</span>
+          </div>
+        </div>
+
+        <div class="subject-line">
+          <h3>Subject</h3>
+          <p>Design System Invoice</p>
+        </div>
+
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item Detail</th>
+              <th style="text-align: center">QTY</th>
+              <th style="text-align: right">Rate</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="item-name">Item Name</div>
+                <div class="item-description">Item description</div>
+              </td>
+              <td style="text-align: center">1</td>
+              <td style="text-align: right">$3,000.00</td>
+              <td>$3,000.00</td>
+            </tr>
+            <tr>
+              <td>
+                <div class="item-name">Item Name</div>
+                <div class="item-description">Item description</div>
+              </td>
+              <td style="text-align: center">1</td>
+              <td style="text-align: right">$1,500.00</td>
+              <td>$1,500.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="totals-content">
+            <div class="total-row subtotal">
+              <span>Subtotal</span>
+              <span>$4,500.00</span>
+            </div>
+            <div class="total-row">
+              <span>Tax (10%)</span>
+              <span>$450.00</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>Total</span>
+              <span>$4,950.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-content">
+          <h4>Thanks for the business.</h4>
+          <p>Date: 01 Aug, 2023 | Due Date: 15 Aug, 2023</p>
+        </div>
+        <div class="terms">
+          <h4>Terms & Conditions</h4>
+          <p>Please pay within 15 days of receiving this invoice.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
