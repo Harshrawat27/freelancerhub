@@ -3,7 +3,6 @@
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +18,20 @@ import {
   type InvoiceFormData,
   type InvoiceLineItem,
 } from '@/lib/validations';
+import dynamic from 'next/dynamic';
+
+// Dynamically import InvoicePreview with no SSR to avoid DOMMatrix error
+const InvoicePreview = dynamic(() => import('@/components/InvoicePreview'), {
+  ssr: false,
+  loading: () => (
+    <div className='flex h-full w-full items-center justify-center'>
+      <div className='text-center'>
+        <div className='mb-2 h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-primary mx-auto'></div>
+        <p className='text-sm text-gray-500'>Loading preview...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function CreateInvoice() {
   const [invoiceData, setInvoiceData] = useState<InvoiceFormData>({
@@ -618,275 +631,9 @@ export default function CreateInvoice() {
                 </Button>
               </div>
 
-              {/* Invoice Preview Content */}
-              <div
-                className='bg-white text-black rounded-lg overflow-hidden shadow-lg'
-                style={{
-                  fontFamily:
-                    '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
-                }}
-              >
-                {/* Colored Header Section */}
-                <div className='bg-[#ee575a] text-white p-5'>
-                  <div className='flex justify-between items-start flex-wrap gap-8'>
-                    {/* Company Info */}
-                    <div>
-                      <h1 className='text-3xl font-bold mb-3 leading-tight'>
-                        {invoiceData.businessName || 'Your Business'}
-                      </h1>
-                      <p className='opacity-95 leading-relaxed text-sm'>
-                        {invoiceData.businessEmail || 'hello@email.com'}
-                      </p>
-                      {invoiceData.businessPhone && (
-                        <p className='opacity-95 leading-relaxed text-sm'>
-                          {invoiceData.businessPhone}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Invoice Amount */}
-                    <div className='text-right'>
-                      <div className='text-sm opacity-90 mb-2'>
-                        Invoice of (USD)
-                      </div>
-                      <div className='text-4xl font-bold'>
-                        ${invoiceData.total.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Invoice Body */}
-                <div className='pt-10 p-5'>
-                  {/* From and Billed To */}
-                  <div className='grid grid-cols-2 gap-10 mb-10'>
-                    {/* From */}
-                    <div>
-                      <h3 className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4'>
-                        From
-                      </h3>
-                      <p className='font-normal text-gray-900 text-base mb-2'>
-                        {invoiceData.businessName || 'Your Business'}
-                      </p>
-                      {invoiceData.businessAddress && (
-                        <p className='text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-1'>
-                          {invoiceData.businessAddress}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Billed To */}
-                    <div>
-                      <h3 className='text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4'>
-                        Billed To
-                      </h3>
-                      <p className='font-normal text-gray-900 text-base mb-2'>
-                        {invoiceData.clientName || 'Client Name'}
-                      </p>
-                      {invoiceData.clientAddress && (
-                        <p className='text-sm text-gray-700 leading-relaxed whitespace-pre-line'>
-                          {invoiceData.clientAddress}
-                        </p>
-                      )}
-                      {invoiceData.clientPhone && (
-                        <p className='text-sm text-gray-700 mt-1'>
-                          {invoiceData.clientPhone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Meta Information Grid */}
-                  <div className='grid grid-cols-3 gap-5 p-4 bg-gray-50 rounded-xl mb-8'>
-                    <div>
-                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
-                        Invoice Number
-                      </div>
-                      <div className='text-sm text-gray-900 font-semibold'>
-                        {invoiceData.invoiceNumber}
-                      </div>
-                    </div>
-                    {invoiceData.poNumber && (
-                      <div>
-                        <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
-                          Reference
-                        </div>
-                        <div className='text-sm text-gray-900 font-semibold'>
-                          {invoiceData.poNumber}
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
-                        Invoice Date
-                      </div>
-                      <div className='text-sm text-gray-900 font-semibold'>
-                        {new Date(invoiceData.invoiceDate).toLocaleDateString(
-                          'en-US',
-                          {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          }
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className='text-xs text-gray-500 uppercase tracking-wider mb-1'>
-                        Due Date
-                      </div>
-                      <div className='text-sm text-gray-900 font-semibold'>
-                        {new Date(invoiceData.dueDate).toLocaleDateString(
-                          'en-US',
-                          {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          }
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Subject Line */}
-                  {invoiceData.notes && (
-                    <div
-                      className='p-5 mb-8 rounded-xl'
-                      style={{ background: 'rgba(238, 87, 90, 0.08)' }}
-                    >
-                      <h3 className='text-sm text-gray-500 mb-2'>Notes</h3>
-                      <p className='text-base text-gray-900 font-normal'>
-                        {invoiceData.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Items Table */}
-                  <div className='mb-8'>
-                    <table className='w-full'>
-                      <thead className='bg-gray-50'>
-                        <tr>
-                          <th className='text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>
-                            Item Detail
-                          </th>
-                          <th
-                            className='text-center py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
-                            style={{ width: '80px' }}
-                          >
-                            QTY
-                          </th>
-                          <th
-                            className='text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
-                            style={{ width: '120px' }}
-                          >
-                            Rate
-                          </th>
-                          <th
-                            className='text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'
-                            style={{ width: '120px' }}
-                          >
-                            Amount
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invoiceData.items.map((item, index) => (
-                          <tr
-                            key={item.id}
-                            className='border-t border-gray-200'
-                          >
-                            <td className='py-5 px-4'>
-                              <div className='font-semibold text-gray-900 mb-1'>
-                                Item {index + 1}
-                              </div>
-                              <div className='text-sm text-gray-600'>
-                                {item.description || 'Item description'}
-                              </div>
-                            </td>
-                            <td className='py-5 px-4 text-center text-sm text-gray-700'>
-                              {item.quantity}
-                            </td>
-                            <td className='py-5 px-4 text-right text-sm text-gray-700'>
-                              ${item.rate.toFixed(2)}
-                            </td>
-                            <td className='py-5 px-4 text-right text-sm text-gray-700'>
-                              ${item.amount.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Totals Section */}
-                  <div className='flex justify-end mb-10'>
-                    <div className='w-80'>
-                      <div className='flex justify-between py-2 text-smpb-3 mb-3'>
-                        <span>Subtotal</span>
-                        <span>${invoiceData.subtotal.toFixed(2)}</span>
-                      </div>
-                      {invoiceData.taxRate > 0 && (
-                        <div className='flex justify-between py-2 text-sm'>
-                          <span>Tax ({invoiceData.taxRate}%)</span>
-                          <span>${invoiceData.taxAmount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {invoiceData.discount > 0 && (
-                        <div className='flex justify-between py-2 text-sm'>
-                          <span>Discount</span>
-                          <span>-${invoiceData.discount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className='flex justify-between pt-3 mt-3 border-t-2 border-[#ee575a] text-lg font-bold text-[#ee575a]'>
-                        <span>Total</span>
-                        <span>${invoiceData.total.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className='border-t-2 border-gray-100 px-10 py-8 bg-[#fafafa]'>
-                  <div className='text-center mb-5'>
-                    <h4 className='text-[#ee575a] font-semibold mb-2'>
-                      Thanks for the business.
-                    </h4>
-                    <p className='text-sm text-gray-600'>
-                      Date:{' '}
-                      {new Date(invoiceData.invoiceDate).toLocaleDateString(
-                        'en-US',
-                        {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        }
-                      )}{' '}
-                      | Due Date:{' '}
-                      {new Date(invoiceData.dueDate).toLocaleDateString(
-                        'en-US',
-                        {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        }
-                      )}
-                    </p>
-                  </div>
-                  <div className='mt-5 pt-5 border-t border-gray-200'>
-                    <h4 className='text-sm font-semibold text-gray-700 mb-2'>
-                      Terms & Conditions
-                    </h4>
-                    {invoiceData.terms ? (
-                      <p className='text-sm text-gray-600 leading-relaxed whitespace-pre-line'>
-                        {invoiceData.terms}
-                      </p>
-                    ) : (
-                      <p className='text-sm text-gray-600 leading-relaxed'>
-                        Please pay within 15 days of receiving this invoice.
-                      </p>
-                    )}
-                  </div>
-                </div>
+              {/* Invoice Preview */}
+              <div className='w-full h-full rounded-lg overflow-hidden bg-gray-100'>
+                <InvoicePreview invoiceData={invoiceData} />
               </div>
             </div>
           </div>
