@@ -95,10 +95,12 @@ export default function CreateChats() {
         for (let k = i - 1; k >= 0; k--) {
           const prevLine = lines[k].trim();
           // Skip empty lines, "Profile Image", and single uppercase letters (A-Z)
-          if (prevLine &&
-              prevLine !== 'Profile Image' &&
-              prevLine.length > 0 &&
-              !/^[A-Z]$/.test(prevLine)) {
+          if (
+            prevLine &&
+            prevLine !== 'Profile Image' &&
+            prevLine.length > 0 &&
+            !/^[A-Z]$/.test(prevLine)
+          ) {
             sender = prevLine;
             break;
           }
@@ -133,14 +135,16 @@ export default function CreateChats() {
           }
 
           // Skip empty lines, single letters, and file attachments
-          if (nextLine &&
-              !/^[A-Z]$/.test(nextLine) &&
-              !nextLine.includes('File') &&
-              !nextLine.includes('Please note:') &&
-              !nextLine.includes('cannot be scanned') &&
-              !nextLine.includes('Learn more') &&
-              !nextLine.match(/^\([\d\.]+ (MB|KB|GB)\)$/) &&
-              !nextLine.match(/\.(mov|mp4|jpg|png|pdf)$/i)) {
+          if (
+            nextLine &&
+            !/^[A-Z]$/.test(nextLine) &&
+            !nextLine.includes('File') &&
+            !nextLine.includes('Please note:') &&
+            !nextLine.includes('cannot be scanned') &&
+            !nextLine.includes('Learn more') &&
+            !nextLine.match(/^\([\d\.]+ (MB|KB|GB)\)$/) &&
+            !nextLine.match(/\.(mov|mp4|jpg|png|pdf)$/i)
+          ) {
             message += (message ? ' ' : '') + nextLine;
           }
         }
@@ -277,7 +281,10 @@ export default function CreateChats() {
 
     // Replace all occurrences in rawChat
     const updatedChat = rawChat.replace(
-      new RegExp(`\\b${originalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'),
+      new RegExp(
+        `\\b${originalName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+        'g'
+      ),
       newName.trim()
     );
     setRawChat(updatedChat);
@@ -366,10 +373,12 @@ export default function CreateChats() {
       <main className='ml-[270px] p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName='Create Chats' />
 
-        <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
+        <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Input */}
-          <div className='flex flex-col gap-4 overflow-auto'>
-            <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] flex flex-col grow'>
+          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar px-1'>
+            {/* <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] flex flex-col grow'> */}
+            {/* <div className='bg-secondary rounded-lg flex flex-col grow'> */}
+            <div className='rounded-lg flex flex-col grow'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-2'>
                 Paste Chat
               </h2>
@@ -410,7 +419,8 @@ export default function CreateChats() {
 
             {/* Title and Sender Assignment */}
             {parsedMessages.length > 0 && (
-              <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+              // <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
+              <div>
                 {/* Title Input */}
                 <div className='mb-4'>
                   <label className='text-sm font-medium text-foreground mb-2 block'>
@@ -547,10 +557,12 @@ export default function CreateChats() {
 
                   <div className='space-y-2'>
                     {[...leftSenders, ...rightSenders].map((sender, index) => {
-                      const originalName = Object.keys(nameMapping).find(
-                        (key) => nameMapping[key] === sender
-                      ) || sender;
-                      const hasBeenRenamed = nameMapping[originalName] !== undefined;
+                      const originalName =
+                        Object.keys(nameMapping).find(
+                          (key) => nameMapping[key] === sender
+                        ) || sender;
+                      const hasBeenRenamed =
+                        nameMapping[originalName] !== undefined;
 
                       return (
                         <div
@@ -608,7 +620,7 @@ export default function CreateChats() {
           <div className='flex flex-col max-h-full overflow-auto'>
             <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] flex flex-col h-full'>
               {/* Header */}
-              <div className='p-4 border-b border-border flex items-center justify-between'>
+              <div className='p-4 border-b border-background flex items-center justify-between'>
                 <h2 className='font-heading text-xl font-bold text-foreground'>
                   Chat Preview
                 </h2>
