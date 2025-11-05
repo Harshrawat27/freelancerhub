@@ -12,3 +12,5 @@
 - edit mode reading mode, comments in reading mode!
 
 - if some part is static then it should render and we should only show rendering to the one that is dynamic, how to achieve this? 
+
+- loading preview >> make proper skeleton
