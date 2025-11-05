@@ -131,7 +131,14 @@ export default function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
         if (!isActive) return;
 
         const newUrl = createBlobUrl({ blob });
-        setGeneratedPdfUrl(newUrl);
+
+        // Revoke the old URL before setting the new one
+        setGeneratedPdfUrl((prevUrl) => {
+          if (prevUrl) {
+            revokeBlobUrl({ url: prevUrl });
+          }
+          return newUrl;
+        });
       } catch (err) {
         if (!isActive) return;
 
@@ -143,11 +150,17 @@ export default function InvoicePreview({ invoiceData }: InvoicePreviewProps) {
 
     return () => {
       isActive = false;
+    };
+  }, [invoiceData]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
       if (generatedPdfUrl) {
         revokeBlobUrl({ url: generatedPdfUrl });
       }
     };
-  }, [invoiceData]);
+  }, [generatedPdfUrl]);
 
   if (pdfError) {
     return (

@@ -14,12 +14,34 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   invoiceSchema,
   type InvoiceFormData,
   type InvoiceLineItem,
+  type BillingDetail,
+  type CustomField,
 } from '@/lib/validations';
 import dynamic from 'next/dynamic';
 import { DatePicker } from '@/components/DatePicker';
+import { CustomFields } from '@/components/CustomFields';
+import { BillingDetails } from '@/components/BillingDetails';
+import {
+  ColorPicker,
+  ColorPickerTrigger,
+  ColorPickerSwatch,
+  ColorPickerInput,
+  ColorPickerContent,
+  ColorPickerArea,
+  ColorPickerHueSlider,
+  ColorPickerFormatSelect,
+} from '@/components/ui/color-picker';
+import { currencies } from '@/lib/currencies';
 
 // Dynamically import InvoicePreview with no SSR to avoid DOMMatrix error
 const InvoicePreview = dynamic(() => import('@/components/InvoicePreview'), {
@@ -36,47 +58,77 @@ const InvoicePreview = dynamic(() => import('@/components/InvoicePreview'), {
 
 export default function CreateInvoice() {
   const [invoiceData, setInvoiceData] = useState<InvoiceFormData>({
+    // Business Information
     businessName: '',
     businessEmail: '',
     businessPhone: '',
     businessAddress: '',
     businessLogo: '',
+    businessSignature: '',
+    businessCustomFields: [],
+
+    // Client Information
     clientName: '',
     clientEmail: '',
     clientPhone: '',
     clientAddress: '',
+    clientCustomFields: [],
+
+    // Invoice Details
+    currency: 'USD',
+    themeColor: '#ee575a',
+    invoicePrefix: 'INV',
+    serialNumber: `${Date.now()}`,
     invoiceNumber: `INV-${Date.now()}`,
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0],
+    paymentTerms: '',
     poNumber: '',
+
+    // Line Items
     items: [
       {
         id: '1',
+        name: '',
         description: '',
         quantity: 1,
         rate: 0,
         amount: 0,
       },
     ],
+
+    // Billing Details
+    billingDetails: [],
+
+    // Totals
     subtotal: 0,
-    taxRate: 0,
-    taxAmount: 0,
-    discount: 0,
     total: 0,
+
+    // Payment Notes
+    notes: '',
+    terms: '',
+    paymentCustomFields: [],
   });
 
   // Calculate totals
   const calculateTotals = (
     items: InvoiceLineItem[],
-    taxRate: number,
-    discount: number
+    billingDetails: BillingDetail[]
   ) => {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-    const taxAmount = (subtotal * taxRate) / 100;
-    const total = subtotal + taxAmount - discount;
-    return { subtotal, taxAmount, total };
+
+    // Calculate billing adjustments
+    const billingAdjustments = billingDetails.reduce((sum, detail) => {
+      if (detail.type === 'percentage') {
+        return sum + (subtotal * detail.value) / 100;
+      }
+      return sum + detail.value;
+    }, 0);
+
+    const total = subtotal + billingAdjustments;
+    return { subtotal, total };
   };
 
   // Update invoice data
@@ -84,16 +136,21 @@ export default function CreateInvoice() {
     setInvoiceData((prev) => {
       const updated = { ...prev, [field]: value };
 
-      // Recalculate totals if items, taxRate, or discount changes
-      if (field === 'items' || field === 'taxRate' || field === 'discount') {
-        const { subtotal, taxAmount, total } = calculateTotals(
+      // Recalculate totals if items or billingDetails changes
+      if (field === 'items' || field === 'billingDetails') {
+        const { subtotal, total } = calculateTotals(
           field === 'items' ? value : updated.items,
-          field === 'taxRate' ? value : updated.taxRate,
-          field === 'discount' ? value : updated.discount
+          field === 'billingDetails' ? value : updated.billingDetails
         );
         updated.subtotal = subtotal;
-        updated.taxAmount = taxAmount;
         updated.total = total;
+      }
+
+      // Update invoiceNumber when prefix or serialNumber changes
+      if (field === 'invoicePrefix' || field === 'serialNumber') {
+        const prefix = field === 'invoicePrefix' ? value : updated.invoicePrefix;
+        const serial = field === 'serialNumber' ? value : updated.serialNumber;
+        updated.invoiceNumber = prefix ? `${prefix}-${serial}` : serial;
       }
 
       return updated;
@@ -104,6 +161,7 @@ export default function CreateInvoice() {
   const addLineItem = () => {
     const newItem: InvoiceLineItem = {
       id: Date.now().toString(),
+      name: '',
       description: '',
       quantity: 1,
       rate: 0,
@@ -189,6 +247,34 @@ export default function CreateInvoice() {
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Logo (URL)
+                        </label>
+                        <Input
+                          value={invoiceData.businessLogo}
+                          onChange={(e) =>
+                            updateInvoiceData('businessLogo', e.target.value)
+                          }
+                          placeholder='https://example.com/logo.png'
+                          className='text-sm'
+                        />
+                      </div>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Signature (URL)
+                        </label>
+                        <Input
+                          value={invoiceData.businessSignature}
+                          onChange={(e) =>
+                            updateInvoiceData('businessSignature', e.target.value)
+                          }
+                          placeholder='https://example.com/signature.png'
+                          className='text-sm'
+                        />
+                      </div>
+                    </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>
                         Business Name <span className='text-red-500'>*</span>
@@ -199,33 +285,6 @@ export default function CreateInvoice() {
                           updateInvoiceData('businessName', e.target.value)
                         }
                         placeholder='Your Business Name'
-                        className='text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        Email
-                      </label>
-                      <Input
-                        type='email'
-                        value={invoiceData.businessEmail}
-                        onChange={(e) =>
-                          updateInvoiceData('businessEmail', e.target.value)
-                        }
-                        placeholder='business@example.com'
-                        className='text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        Phone
-                      </label>
-                      <Input
-                        value={invoiceData.businessPhone}
-                        onChange={(e) =>
-                          updateInvoiceData('businessPhone', e.target.value)
-                        }
-                        placeholder='+1 (555) 000-0000'
                         className='text-sm'
                       />
                     </div>
@@ -243,6 +302,13 @@ export default function CreateInvoice() {
                         rows={3}
                       />
                     </div>
+                    <CustomFields
+                      label='Custom Fields'
+                      fields={invoiceData.businessCustomFields}
+                      onChange={(fields) =>
+                        updateInvoiceData('businessCustomFields', fields)
+                      }
+                    />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -272,33 +338,6 @@ export default function CreateInvoice() {
                     </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        Email
-                      </label>
-                      <Input
-                        type='email'
-                        value={invoiceData.clientEmail}
-                        onChange={(e) =>
-                          updateInvoiceData('clientEmail', e.target.value)
-                        }
-                        placeholder='client@example.com'
-                        className='text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        Phone
-                      </label>
-                      <Input
-                        value={invoiceData.clientPhone}
-                        onChange={(e) =>
-                          updateInvoiceData('clientPhone', e.target.value)
-                        }
-                        placeholder='+1 (555) 000-0000'
-                        className='text-sm'
-                      />
-                    </div>
-                    <div>
-                      <label className='text-xs font-medium text-muted-foreground mb-1 block'>
                         Address
                       </label>
                       <Textarea
@@ -311,6 +350,13 @@ export default function CreateInvoice() {
                         rows={3}
                       />
                     </div>
+                    <CustomFields
+                      label='Custom Fields'
+                      fields={invoiceData.clientCustomFields}
+                      onChange={(fields) =>
+                        updateInvoiceData('clientCustomFields', fields)
+                      }
+                    />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -325,17 +371,99 @@ export default function CreateInvoice() {
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Currency
+                        </label>
+                        <Select
+                          value={invoiceData.currency}
+                          onValueChange={(value) =>
+                            updateInvoiceData('currency', value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {currencies.map((currency) => (
+                              <SelectItem key={currency.code} value={currency.code}>
+                                {currency.code} ({currency.symbol}) - {currency.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Theme Color
+                        </label>
+                        <ColorPicker
+                          value={invoiceData.themeColor}
+                          onValueChange={(value) => {
+                            if (value !== invoiceData.themeColor) {
+                              updateInvoiceData('themeColor', value);
+                            }
+                          }}
+                        >
+                          <div className='flex gap-2 items-center'>
+                            <ColorPickerTrigger asChild>
+                              <button
+                                type='button'
+                                className='rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                              >
+                                <ColorPickerSwatch />
+                              </button>
+                            </ColorPickerTrigger>
+                            <ColorPickerInput className='flex-1' />
+                          </div>
+                          <ColorPickerContent>
+                            <ColorPickerArea />
+                            <ColorPickerHueSlider />
+                            <div className='flex gap-2'>
+                              <ColorPickerInput className='flex-1' />
+                              <ColorPickerFormatSelect />
+                            </div>
+                          </ColorPickerContent>
+                        </ColorPicker>
+                      </div>
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Invoice Prefix
+                        </label>
+                        <Input
+                          value={invoiceData.invoicePrefix}
+                          onChange={(e) =>
+                            updateInvoiceData('invoicePrefix', e.target.value)
+                          }
+                          placeholder='INV'
+                          className='text-sm'
+                        />
+                      </div>
+                      <div>
+                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                          Serial Number <span className='text-red-500'>*</span>
+                        </label>
+                        <Input
+                          value={invoiceData.serialNumber}
+                          onChange={(e) =>
+                            updateInvoiceData('serialNumber', e.target.value)
+                          }
+                          placeholder='001'
+                          className='text-sm'
+                        />
+                      </div>
+                    </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        Invoice Number <span className='text-red-500'>*</span>
+                        Invoice Number (Auto-generated)
                       </label>
                       <Input
                         value={invoiceData.invoiceNumber}
-                        onChange={(e) =>
-                          updateInvoiceData('invoiceNumber', e.target.value)
-                        }
-                        placeholder='INV-001'
-                        className='text-sm'
+                        readOnly
+                        className='text-sm bg-muted'
                       />
                     </div>
                     <div className='grid grid-cols-2 gap-4'>
@@ -364,15 +492,27 @@ export default function CreateInvoice() {
                     </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                        PO Number (Optional)
+                        Payment Terms
                       </label>
-                      <Input
-                        value={invoiceData.poNumber}
+                      <Textarea
+                        value={invoiceData.paymentTerms}
                         onChange={(e) =>
-                          updateInvoiceData('poNumber', e.target.value)
+                          updateInvoiceData('paymentTerms', e.target.value)
                         }
-                        placeholder='PO-001'
-                        className='text-sm'
+                        placeholder='e.g., Net 30, Due on receipt'
+                        className='text-sm resize-none'
+                        rows={2}
+                      />
+                    </div>
+                    <div className='pt-2'>
+                      <BillingDetails
+                        label='Billing Details (Tax, Discount, etc.)'
+                        details={invoiceData.billingDetails}
+                        onChange={(details) =>
+                          updateInvoiceData('billingDetails', details)
+                        }
+                        subtotal={invoiceData.subtotal}
+                        currency={invoiceData.currency}
                       />
                     </div>
                   </AccordionContent>
@@ -423,7 +563,20 @@ export default function CreateInvoice() {
                         </div>
                         <div>
                           <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                            Description <span className='text-red-500'>*</span>
+                            Name <span className='text-red-500'>*</span>
+                          </label>
+                          <Input
+                            value={item.name}
+                            onChange={(e) =>
+                              updateLineItem(item.id, 'name', e.target.value)
+                            }
+                            placeholder='Item or service name'
+                            className='text-sm'
+                          />
+                        </div>
+                        <div>
+                          <label className='text-xs font-medium text-muted-foreground mb-1 block'>
+                            Description
                           </label>
                           <Input
                             value={item.description}
@@ -434,7 +587,7 @@ export default function CreateInvoice() {
                                 e.target.value
                               )
                             }
-                            placeholder='Service or product description'
+                            placeholder='Additional details (optional)'
                             className='text-sm'
                           />
                         </div>
@@ -526,45 +679,6 @@ export default function CreateInvoice() {
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                          Tax Rate (%)
-                        </label>
-                        <Input
-                          type='number'
-                          min='0'
-                          max='100'
-                          step='0.01'
-                          value={invoiceData.taxRate}
-                          onChange={(e) =>
-                            updateInvoiceData(
-                              'taxRate',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className='text-sm'
-                        />
-                      </div>
-                      <div>
-                        <label className='text-xs font-medium text-muted-foreground mb-1 block'>
-                          Discount ($)
-                        </label>
-                        <Input
-                          type='number'
-                          min='0'
-                          step='0.01'
-                          value={invoiceData.discount}
-                          onChange={(e) =>
-                            updateInvoiceData(
-                              'discount',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className='text-sm'
-                        />
-                      </div>
-                    </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-1 block'>
                         Notes
@@ -593,6 +707,13 @@ export default function CreateInvoice() {
                         rows={3}
                       />
                     </div>
+                    <CustomFields
+                      label='Custom Payment Fields'
+                      fields={invoiceData.paymentCustomFields}
+                      onChange={(fields) =>
+                        updateInvoiceData('paymentCustomFields', fields)
+                      }
+                    />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
