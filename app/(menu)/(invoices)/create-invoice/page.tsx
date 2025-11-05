@@ -2,7 +2,7 @@
 
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -111,6 +111,20 @@ export default function CreateInvoice() {
     terms: '',
     paymentCustomFields: [],
   });
+
+  // Debounced invoice data for preview (updates 2 seconds after user stops typing)
+  const [debouncedInvoiceData, setDebouncedInvoiceData] = useState<InvoiceFormData>(invoiceData);
+
+  // Debounce the invoice data updates for preview
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInvoiceData(invoiceData);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [invoiceData]);
 
   // Calculate totals
   const calculateTotals = (
@@ -241,8 +255,8 @@ export default function CreateInvoice() {
                   value='business'
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
-                  <AccordionTrigger className='hover:no-underline'>
-                    <span className='font-medium text-foreground'>
+                  <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
+                    <span className='font-medium'>
                       Business Information
                     </span>
                   </AccordionTrigger>
@@ -317,8 +331,8 @@ export default function CreateInvoice() {
                   value='client'
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
-                  <AccordionTrigger className='hover:no-underline'>
-                    <span className='font-medium text-foreground'>
+                  <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
+                    <span className='font-medium'>
                       Client Information
                     </span>
                   </AccordionTrigger>
@@ -365,8 +379,8 @@ export default function CreateInvoice() {
                   value='details'
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
-                  <AccordionTrigger className='hover:no-underline'>
-                    <span className='font-medium text-foreground'>
+                  <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
+                    <span className='font-medium'>
                       Invoice Details
                     </span>
                   </AccordionTrigger>
@@ -523,8 +537,8 @@ export default function CreateInvoice() {
                   value='items'
                   className='border border-border rounded-lg px-4 bg-background/50'
                 >
-                  <AccordionTrigger className='hover:no-underline'>
-                    <span className='font-medium text-foreground'>
+                  <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
+                    <span className='font-medium'>
                       Line Items ({invoiceData.items.length})
                     </span>
                   </AccordionTrigger>
@@ -673,8 +687,8 @@ export default function CreateInvoice() {
                   value='payment'
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
-                  <AccordionTrigger className='hover:no-underline'>
-                    <span className='font-medium text-foreground'>
+                  <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
+                    <span className='font-medium'>
                       Payment & Notes
                     </span>
                   </AccordionTrigger>
@@ -751,7 +765,7 @@ export default function CreateInvoice() {
 
               {/* Invoice Preview */}
               <div className='w-full h-full rounded-lg overflow-hidden bg-gray-100'>
-                <InvoicePreview invoiceData={invoiceData} />
+                <InvoicePreview invoiceData={debouncedInvoiceData} />
               </div>
             </div>
           </div>
