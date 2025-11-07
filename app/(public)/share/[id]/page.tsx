@@ -4,6 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/Topbar';
+import { useComments } from '@/lib/realtime/hooks/useComments';
+import { CommentThread } from '@/components/comments/CommentThread';
+import { Card } from '@/components/ui/card';
+import { MessageSquare, AlertCircle } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
 
 interface Message {
   id: string;
@@ -33,11 +38,25 @@ export default function SharedChatPage({
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showComments, setShowComments] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     params.then((p) => setId(p.id));
   }, [params]);
+
+  // Get current user info
+  useEffect(() => {
+    const getUser = async () => {
+      const session = await authClient.getSession();
+      if (session?.data) {
+        setCurrentUser(session.data.user);
+      }
+    };
+
+    getUser();
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -71,6 +90,51 @@ export default function SharedChatPage({
 
     fetchSharedChat();
   }, [id]);
+
+  // Initialize comments hook
+  const {
+    comments,
+    isLoading: commentsLoading,
+    error: commentsError,
+    isConnected,
+    createComment,
+    updateComment,
+    deleteComment,
+  } = useComments({
+    chatId: id || '',
+    userId: currentUser?.id || 'anonymous',
+    userName: currentUser?.name || 'Anonymous User',
+    userAvatar: currentUser?.image,
+  });
+
+  const handleAddComment = async (content: string) => {
+    if (!chat) return;
+
+    await createComment({
+      chatId: chat.id,
+      messageId: 'main',
+      content,
+    });
+  };
+
+  const handleEditComment = async (commentId: string, content: string) => {
+    await updateComment(commentId, content);
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    await deleteComment(commentId);
+  };
+
+  const handleReplyToComment = async (parentId: string, content: string) => {
+    if (!chat) return;
+
+    await createComment({
+      chatId: chat.id,
+      messageId: 'main',
+      content,
+      parentId,
+    });
+  };
 
   const parseChat = (
     chatText: string,
@@ -223,53 +287,123 @@ export default function SharedChatPage({
 
   return (
     <div className='min-h-screen bg-background p-6'>
-      <div className='max-w-4xl mx-auto'>
-        <Topbar pageName={chat?.title || 'Loading...'} />
+      <div className='max-w-7xl mx-auto'>
+        <div className='flex items-center justify-between mb-6'>
+          <Topbar pageName={chat?.title || 'Loading...'} />
 
-        <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 mt-6'>
-          <div className='space-y-4'>
-            {parsedMessages.map((msg) => {
-              const position = getSenderPosition(msg.sender);
-              const isLeft = position === 'left';
+          {/* Toggle Comments Button (Mobile) */}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className='lg:hidden flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors'
+          >
+            <MessageSquare className='h-5 w-5' />
+            <span className='text-sm'>{comments.length}</span>
+          </button>
+        </div>
 
-              return (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    'flex',
-                    isLeft ? 'justify-start' : 'justify-end'
-                  )}
-                >
-                  <div className={cn('max-w-[75%]')}>
+        {isConnected && (
+          <div className='flex items-center gap-2 text-sm text-muted-foreground mb-4'>
+            <span className='w-2 h-2 bg-green-500 rounded-full'></span>
+            <span>Live</span>
+          </div>
+        )}
+
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Chat Content */}
+          <div className='lg:col-span-2'>
+            <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6'>
+              <div className='space-y-4'>
+                {parsedMessages.map((msg) => {
+                  const position = getSenderPosition(msg.sender);
+                  const isLeft = position === 'left';
+
+                  return (
                     <div
+                      key={msg.id}
                       className={cn(
-                        'rounded-lg p-3 shadow-sm',
-                        isLeft
-                          ? 'bg-background text-foreground'
-                          : 'bg-primary/70 text-primary-foreground'
+                        'flex',
+                        isLeft ? 'justify-start' : 'justify-end'
                       )}
                     >
-                      <p className='font-medium text-sm mb-1 opacity-50'>
-                        {msg.sender}
-                      </p>
-                      <p className='text-sm whitespace-pre-wrap wrap-break-word'>
-                        {msg.message}
-                      </p>
-                      <p
-                        className={cn(
-                          'text-xs mt-2 opacity-50',
-                          isLeft
-                            ? 'text-muted-foreground'
-                            : 'text-primary-foreground/70'
-                        )}
-                      >
-                        {msg.timestamp}
-                      </p>
+                      <div className={cn('max-w-[75%]')}>
+                        <div
+                          className={cn(
+                            'rounded-lg p-3 shadow-sm',
+                            isLeft
+                              ? 'bg-background text-foreground'
+                              : 'bg-primary/70 text-primary-foreground'
+                          )}
+                        >
+                          <p className='font-medium text-sm mb-1 opacity-50'>
+                            {msg.sender}
+                          </p>
+                          <p className='text-sm whitespace-pre-wrap wrap-break-word'>
+                            {msg.message}
+                          </p>
+                          <p
+                            className={cn(
+                              'text-xs mt-2 opacity-50',
+                              isLeft
+                                ? 'text-muted-foreground'
+                                : 'text-primary-foreground/70'
+                            )}
+                          >
+                            {msg.timestamp}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Comments Sidebar */}
+          <div className={cn(
+            'lg:col-span-1',
+            showComments ? 'block' : 'hidden lg:block'
+          )}>
+            <div className='sticky top-4'>
+              <div className='flex items-center gap-2 mb-4'>
+                <MessageSquare className='h-5 w-5 text-primary' />
+                <h2 className='text-lg font-semibold'>
+                  Comments ({comments.length})
+                </h2>
+              </div>
+
+              {commentsError ? (
+                <Card className='p-4 text-center'>
+                  <AlertCircle className='h-8 w-8 text-destructive mx-auto mb-2' />
+                  <p className='text-sm text-muted-foreground'>{commentsError}</p>
+                </Card>
+              ) : commentsLoading ? (
+                <Card className='p-4 text-center'>
+                  <div className='mb-2 h-6 w-6 animate-spin rounded-full border-4 border-gray-300 border-t-primary mx-auto'></div>
+                  <p className='text-sm text-muted-foreground'>
+                    Loading comments...
+                  </p>
+                </Card>
+              ) : (
+                <CommentThread
+                  comments={comments}
+                  onAddComment={handleAddComment}
+                  onEditComment={handleEditComment}
+                  onDeleteComment={handleDeleteComment}
+                  onReplyToComment={handleReplyToComment}
+                  currentUserId={currentUser?.id}
+                  threadTitle='Discussion'
+                />
+              )}
+
+              {!currentUser && (
+                <Card className='p-4 mt-4 bg-muted/50'>
+                  <p className='text-xs text-center text-muted-foreground'>
+                    Sign in to add comments
+                  </p>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </div>

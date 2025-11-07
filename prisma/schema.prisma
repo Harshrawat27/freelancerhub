@@ -110,17 +110,58 @@ model TeamMember {
 }
 
 model Chat {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   title           String
-  rawText         String   @db.Text
+  rawText         String          @db.Text
   senderPositions Json?
   nameMapping     Json?
-  isPublic        Boolean  @default(false)
+  isPublic        Boolean         @default(false)
   sharedWith      Json?
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  commentThreads  CommentThread[]
+  comments        Comment[]
 
   @@map("chat")
+}
+
+model CommentThread {
+  id            String    @id @default(cuid())
+  chatId        String
+  chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  messageId     String
+  startOffset   Int
+  endOffset     Int
+  selectedText  String    @db.Text
+  resolved      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  comments      Comment[]
+
+  @@map("comment_thread")
+}
+
+model Comment {
+  id            String         @id @default(cuid())
+  chatId        String
+  chat          Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  messageId     String
+  threadId      String?
+  thread        CommentThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  parentId      String?
+  parent        Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[]      @relation("CommentReplies")
+  content       String         @db.Text
+  startOffset   Int?
+  endOffset     Int?
+  selectedText  String?        @db.Text
+  userId        String
+  userName      String
+  userAvatar    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("comment")
 }
