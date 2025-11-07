@@ -15,6 +15,15 @@ import { authClient, useSession } from '@/lib/auth-client';
 import UploadProject from '@/components/UploadProject';
 import UploadProfile from '@/components/UploadProfile';
 import { useState, useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronsUpDown, LogOut } from 'lucide-react';
 
 // Dummy data
 const dummyProjects = [
@@ -62,6 +71,16 @@ export function Sidebar() {
       ...prev,
       [menu]: !prev[menu],
     }));
+  };
+
+  // Get user initials from name
+  const getUserInitials = (name: string) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -580,27 +599,55 @@ export function Sidebar() {
             </div>
           </div>
         ) : (
-          <div className='px-4 mb-3'>
-            <button
-              onClick={async () => {
-                await authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      window.location.href = '/dashboard';
-                    },
-                  },
-                });
-              }}
-              className={cn(
-                'px-3 py-1 rounded-lg text-sm font-medium',
-                'bg-primary text-primary-foreground',
-                'shadow-md shadow-primary/20 button-highlighted-shadow',
-                'hover:bg-primary/90',
-                'cursor-pointer'
-              )}
-            >
-              Logout
-            </button>
+          <div className='px-2 pb-2 bg-secondary'>
+            <DropdownMenu>
+              <DropdownMenuTrigger className='flex items-center gap-3 px-3 py-2 rounded-lg bg-background w-full cursor-pointer hover:opacity-80 transition-opacity'>
+                {/* User Avatar */}
+                <div className='w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0'>
+                  {session.data?.user?.image ? (
+                    <img
+                      src={session.data.user.image}
+                      alt={session.data.user.name || 'User'}
+                      className='w-10 h-10 rounded-full object-cover'
+                    />
+                  ) : (
+                    <span className='text-sm font-medium text-primary'>
+                      {getUserInitials(session.data?.user?.name || 'User')}
+                    </span>
+                  )}
+                </div>
+                {/* User Info */}
+                <div className='flex-1 min-w-0 text-left'>
+                  <p className='text-sm font-medium text-foreground truncate'>
+                    {session.data?.user?.name || 'User'}
+                  </p>
+                  <p className='text-xs text-muted-foreground truncate'>
+                    {session.data?.user?.email || 'user@example.com'}
+                  </p>
+                </div>
+                {/* Chevron Icon */}
+                <ChevronsUpDown className='w-4 h-4 text-muted-foreground shrink-0' />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='w-60'>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          window.location.href = '/dashboard';
+                        },
+                      },
+                    });
+                  }}
+                  className='cursor-pointer'
+                >
+                  <LogOut className='w-4 h-4 mr-2' />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>
