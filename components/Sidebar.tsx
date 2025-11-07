@@ -14,6 +14,7 @@ import {
 import { authClient, useSession } from '@/lib/auth-client';
 import UploadProject from '@/components/UploadProject';
 import UploadProfile from '@/components/UploadProfile';
+import { LoginSkeleton } from '@/components/LoginSkeleton';
 import { useState, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -524,7 +525,11 @@ export function Sidebar() {
       </div>
 
       <div className='sticky bottom-0'>
-        {!session.data ? (
+        {session.isPending ? (
+          <div className='px-4 mb-3'>
+            <LoginSkeleton />
+          </div>
+        ) : !session.data ? (
           <div className='px-4 mb-3'>
             <div className='px-3 py-3 bg-background rounded-lg'>
               <h2 className='text-black text-xl font-heading mb-1 dark:text-white'>
