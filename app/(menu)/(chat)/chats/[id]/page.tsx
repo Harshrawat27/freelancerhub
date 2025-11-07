@@ -949,62 +949,28 @@ export default function ChatDetail({
                                         </p>
                                       </div>
                                     </div>
-                                    <div className='flex items-center gap-2'>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger className='w-[110px] h-8 text-xs px-2 rounded-md border border-border bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex items-center justify-between'>
-                                          <span className='capitalize'>
-                                            {user.permission}
-                                          </span>
-                                          <ChevronDown className='w-3 h-3 text-muted-foreground' />
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align='end'>
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              updatePermission(
-                                                user.email,
-                                                'viewer'
-                                              )
-                                            }
-                                            className='cursor-pointer'
-                                          >
-                                            Viewer
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              updatePermission(
-                                                user.email,
-                                                'editor'
-                                              )
-                                            }
-                                            className='cursor-pointer'
-                                          >
-                                            Editor
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                      <Button
-                                        onClick={() =>
-                                          removeSharedUser(user.email)
-                                        }
-                                        size='sm'
-                                        variant='ghost'
-                                        className='h-8 w-8 p-0 cursor-pointer'
+                                    <Button
+                                      onClick={() =>
+                                        removeSharedUser(user.email)
+                                      }
+                                      size='sm'
+                                      variant='ghost'
+                                      className='h-8 w-8 p-0 cursor-pointer'
+                                    >
+                                      <svg
+                                        className='w-4 h-4'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
                                       >
-                                        <svg
-                                          className='w-4 h-4'
-                                          fill='none'
-                                          stroke='currentColor'
-                                          viewBox='0 0 24 24'
-                                        >
-                                          <path
-                                            strokeLinecap='round'
-                                            strokeLinejoin='round'
-                                            strokeWidth={2}
-                                            d='M6 18L18 6M6 6l12 12'
-                                          />
-                                        </svg>
-                                      </Button>
-                                    </div>
+                                        <path
+                                          strokeLinecap='round'
+                                          strokeLinejoin='round'
+                                          strokeWidth={2}
+                                          d='M6 18L18 6M6 6l12 12'
+                                        />
+                                      </svg>
+                                    </Button>
                                   </div>
                                 ))}
                               </div>
