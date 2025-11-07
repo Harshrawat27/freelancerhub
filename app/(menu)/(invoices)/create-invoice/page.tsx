@@ -113,7 +113,8 @@ export default function CreateInvoice() {
   });
 
   // Debounced invoice data for preview (updates 2 seconds after user stops typing)
-  const [debouncedInvoiceData, setDebouncedInvoiceData] = useState<InvoiceFormData>(invoiceData);
+  const [debouncedInvoiceData, setDebouncedInvoiceData] =
+    useState<InvoiceFormData>(invoiceData);
 
   // Debounce the invoice data updates for preview
   useEffect(() => {
@@ -162,7 +163,8 @@ export default function CreateInvoice() {
 
       // Update invoiceNumber when prefix or serialNumber changes
       if (field === 'invoicePrefix' || field === 'serialNumber') {
-        const prefix = field === 'invoicePrefix' ? value : updated.invoicePrefix;
+        const prefix =
+          field === 'invoicePrefix' ? value : updated.invoicePrefix;
         const serial = field === 'serialNumber' ? value : updated.serialNumber;
         updated.invoiceNumber = prefix ? `${prefix}-${serial}` : serial;
       }
@@ -233,12 +235,12 @@ export default function CreateInvoice() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[270px] p-6 flex flex-col min-h-screen max-h-screen'>
+      <main className='ml-[260px] p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName='Create Invoice' />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Form with Accordions */}
-          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar px-1'>
+          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar'>
             <div className='rounded-lg flex flex-col pb-6'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-4'>
                 Invoice Details
@@ -256,9 +258,7 @@ export default function CreateInvoice() {
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
                   <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
-                    <span className='font-medium'>
-                      Business Information
-                    </span>
+                    <span className='font-medium'>Business Information</span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
                     <div className='grid grid-cols-2 gap-4'>
@@ -282,7 +282,10 @@ export default function CreateInvoice() {
                         <Input
                           value={invoiceData.businessSignature}
                           onChange={(e) =>
-                            updateInvoiceData('businessSignature', e.target.value)
+                            updateInvoiceData(
+                              'businessSignature',
+                              e.target.value
+                            )
                           }
                           placeholder='https://example.com/signature.png'
                           className='text-sm'
@@ -332,9 +335,7 @@ export default function CreateInvoice() {
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
                   <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
-                    <span className='font-medium'>
-                      Client Information
-                    </span>
+                    <span className='font-medium'>Client Information</span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
                     <div>
@@ -380,9 +381,7 @@ export default function CreateInvoice() {
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
                   <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
-                    <span className='font-medium'>
-                      Invoice Details
-                    </span>
+                    <span className='font-medium'>Invoice Details</span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
                     <div className='grid grid-cols-2 gap-4'>
@@ -401,8 +400,12 @@ export default function CreateInvoice() {
                           </SelectTrigger>
                           <SelectContent>
                             {currencies.map((currency) => (
-                              <SelectItem key={currency.code} value={currency.code}>
-                                {currency.code} ({currency.symbol}) - {currency.name}
+                              <SelectItem
+                                key={currency.code}
+                                value={currency.code}
+                              >
+                                {currency.code} ({currency.symbol}) -{' '}
+                                {currency.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -488,7 +491,9 @@ export default function CreateInvoice() {
                           </>
                         }
                         value={invoiceData.invoiceDate}
-                        onChange={(date) => updateInvoiceData('invoiceDate', date)}
+                        onChange={(date) =>
+                          updateInvoiceData('invoiceDate', date)
+                        }
                         placeholder='Select invoice date'
                         id='invoiceDate'
                       />
@@ -688,9 +693,7 @@ export default function CreateInvoice() {
                   className='border border-border rounded-lg px-3 bg-background/50'
                 >
                   <AccordionTrigger className='hover:no-underline data-[state=open]:text-primary'>
-                    <span className='font-medium'>
-                      Payment & Notes
-                    </span>
+                    <span className='font-medium'>Payment & Notes</span>
                   </AccordionTrigger>
                   <AccordionContent className='space-y-4 pt-4 px-1'>
                     <div>

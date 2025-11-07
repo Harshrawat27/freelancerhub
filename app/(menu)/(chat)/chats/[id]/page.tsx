@@ -521,7 +521,7 @@ export default function ChatDetail({
     return (
       <div className='min-h-screen bg-background transition-colors duration-300'>
         <Sidebar />
-        <main className='ml-[270px] p-6 flex flex-col min-h-screen'>
+        <main className='ml-[260px] p-6 flex flex-col min-h-screen'>
           <Topbar pageName='Chat' />
           <div className='flex items-center justify-center flex-1'>
             <div className='text-center'>
@@ -538,7 +538,7 @@ export default function ChatDetail({
     return (
       <div className='min-h-screen bg-background transition-colors duration-300'>
         <Sidebar />
-        <main className='ml-[270px] p-6 flex flex-col min-h-screen'>
+        <main className='ml-[260px] p-6 flex flex-col min-h-screen'>
           <Topbar pageName='Chat' />
           <div className='flex items-center justify-center flex-1'>
             <div className='text-center'>
@@ -553,7 +553,7 @@ export default function ChatDetail({
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[270px] p-6 flex flex-col min-h-screen max-h-screen'>
+      <main className='ml-[260px] p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName={chat.title} />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>

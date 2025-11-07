@@ -7,7 +7,7 @@ export default function Dashboard() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[270px] p-6'>
+      <main className='ml-[260px] p-6'>
         <Topbar pageName='Dashboard' />
         <p className='text-muted-foreground mt-2'>
           Welcome to your dashboard!!

@@ -14,3 +14,10 @@
 - if some part is static then it should render and we should only show rendering to the one that is dynamic, how to achieve this? 
 
 - loading preview >> make proper skeleton
+
+
+todo left to launch it:
+- hide other things from side bar except chat
+- user without login can create chat but they have to share it with everyone can't share with particular email
+- they can't chat over it
+- connect it with chat

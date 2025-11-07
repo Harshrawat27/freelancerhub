@@ -817,7 +817,10 @@ function ColorPickerContent(props: ColorPickerContentProps) {
       data-slot='color-picker-content'
       asChild={asChild}
       {...popoverContentProps}
-      className={cn('flex w-[340px] flex-col gap-4 p-4', className)}
+      className={cn(
+        'flex w-[340px] flex-col gap-4 p-4 bg-background',
+        className
+      )}
     >
       {children}
     </PopoverContent>

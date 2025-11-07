@@ -370,12 +370,12 @@ export default function CreateChats() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[270px] p-6 flex flex-col min-h-screen max-h-screen'>
+      <main className='ml-[260px] p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName='Create Chats' />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Input */}
-          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar px-1'>
+          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar'>
             {/* <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] flex flex-col grow'> */}
             {/* <div className='bg-secondary rounded-lg flex flex-col grow'> */}
             <div className='rounded-lg flex flex-col grow'>
