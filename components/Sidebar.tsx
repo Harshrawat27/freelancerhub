@@ -48,7 +48,6 @@ export function Sidebar() {
     return { invoice: false, proposal: false, chats: false };
   });
 
-  // Save to localStorage whenever state changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(
