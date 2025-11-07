@@ -240,7 +240,7 @@ export default function CreateInvoice() {
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Form with Accordions */}
-          <div className='flex flex-col gap-4 overflow-auto hide-scrollbar'>
+          <div className='flex flex-col gap-4 overflow-auto scroll-bar-hidden'>
             <div className='rounded-lg flex flex-col pb-6'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-4'>
                 Invoice Details

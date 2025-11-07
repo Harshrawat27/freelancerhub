@@ -181,6 +181,7 @@
 /* Hide scrollbar utility class */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+  opacity: 0;
 }
 
 .hide-scrollbar {
