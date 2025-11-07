@@ -16,7 +16,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { emailSchema } from '@/lib/validations';
+import { ChevronDown } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -943,19 +950,38 @@ export default function ChatDetail({
                                       </div>
                                     </div>
                                     <div className='flex items-center gap-2'>
-                                      <select
-                                        value={user.permission}
-                                        onChange={(e) =>
-                                          updatePermission(
-                                            user.email,
-                                            e.target.value
-                                          )
-                                        }
-                                        className='w-[110px] h-8 text-xs px-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer'
-                                      >
-                                        <option value='viewer'>Viewer</option>
-                                        <option value='editor'>Editor</option>
-                                      </select>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger className='w-[110px] h-8 text-xs px-2 rounded-md border border-border bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex items-center justify-between'>
+                                          <span className='capitalize'>
+                                            {user.permission}
+                                          </span>
+                                          <ChevronDown className='w-3 h-3 text-muted-foreground' />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align='end'>
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              updatePermission(
+                                                user.email,
+                                                'viewer'
+                                              )
+                                            }
+                                            className='cursor-pointer'
+                                          >
+                                            Viewer
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              updatePermission(
+                                                user.email,
+                                                'editor'
+                                              )
+                                            }
+                                            className='cursor-pointer'
+                                          >
+                                            Editor
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                       <Button
                                         onClick={() =>
                                           removeSharedUser(user.email)
@@ -1018,49 +1044,100 @@ export default function ChatDetail({
                                   </p>
                                 </div>
                               </div>
-                              <select
-                                value={linkAccess}
-                                onChange={async (e) => {
-                                  const newAccess = e.target.value as
-                                    | 'restricted'
-                                    | 'anyone';
-                                  setLinkAccess(newAccess);
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className='w-[150px] h-8 text-xs px-2 rounded-md border border-border bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex items-center justify-between'>
+                                  <span>
+                                    {linkAccess === 'restricted'
+                                      ? 'Restricted'
+                                      : 'Anyone with link'}
+                                  </span>
+                                  <ChevronDown className='w-3 h-3 text-muted-foreground' />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end'>
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const newAccess = 'restricted';
+                                      setLinkAccess(newAccess);
 
-                                  // Save to database
-                                  setIsSavingShare(true);
-                                  try {
-                                    const response = await fetch(
-                                      `/api/chat/${id}/share`,
-                                      {
-                                        method: 'PUT',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          isPublic: newAccess === 'anyone',
-                                          sharedWith:
-                                            sharedWith.length > 0
-                                              ? sharedWith
-                                              : null,
-                                        }),
+                                      // Save to database
+                                      setIsSavingShare(true);
+                                      try {
+                                        const response = await fetch(
+                                          `/api/chat/${id}/share`,
+                                          {
+                                            method: 'PUT',
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                              isPublic: false,
+                                              sharedWith:
+                                                sharedWith.length > 0
+                                                  ? sharedWith
+                                                  : null,
+                                            }),
+                                          }
+                                        );
+
+                                        if (!response.ok)
+                                          throw new Error('Failed to update');
+                                        toast.success('Link access updated!');
+                                      } catch (error) {
+                                        toast.error(
+                                          'Failed to update link access'
+                                        );
+                                        setLinkAccess(linkAccess);
+                                      } finally {
+                                        setIsSavingShare(false);
                                       }
-                                    );
+                                    }}
+                                    className='cursor-pointer'
+                                  >
+                                    Restricted
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const newAccess = 'anyone';
+                                      setLinkAccess(newAccess);
 
-                                    if (!response.ok)
-                                      throw new Error('Failed to update');
-                                    toast.success('Link access updated!');
-                                  } catch (error) {
-                                    toast.error('Failed to update link access');
-                                    setLinkAccess(linkAccess); // Revert on error
-                                  } finally {
-                                    setIsSavingShare(false);
-                                  }
-                                }}
-                                className='w-[130px] h-8 text-xs px-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer'
-                              >
-                                <option value='restricted'>Restricted</option>
-                                <option value='anyone'>Anyone with link</option>
-                              </select>
+                                      // Save to database
+                                      setIsSavingShare(true);
+                                      try {
+                                        const response = await fetch(
+                                          `/api/chat/${id}/share`,
+                                          {
+                                            method: 'PUT',
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                              isPublic: true,
+                                              sharedWith:
+                                                sharedWith.length > 0
+                                                  ? sharedWith
+                                                  : null,
+                                            }),
+                                          }
+                                        );
+
+                                        if (!response.ok)
+                                          throw new Error('Failed to update');
+                                        toast.success('Link access updated!');
+                                      } catch (error) {
+                                        toast.error(
+                                          'Failed to update link access'
+                                        );
+                                        setLinkAccess(linkAccess);
+                                      } finally {
+                                        setIsSavingShare(false);
+                                      }
+                                    }}
+                                    className='cursor-pointer'
+                                  >
+                                    Anyone with link
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
 
