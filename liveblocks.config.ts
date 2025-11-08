@@ -31,7 +31,8 @@ declare global {
       | { type: 'comment:updated'; payload: any }
       | { type: 'comment:deleted'; payload: any }
       | { type: 'thread:created'; payload: any }
-      | { type: 'thread:resolved'; payload: any };
+      | { type: 'thread:updated'; payload: any }
+      | { type: 'thread:deleted'; payload: any };
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
