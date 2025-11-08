@@ -30,6 +30,17 @@ interface Chat {
   updatedAt: string;
 }
 
+// Simple hash function to generate deterministic IDs from content
+function hashString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
 // Inner component that uses Liveblocks hooks
 function SharedChatPageContent({ chatId }: { chatId: string }) {
   const [chat, setChat] = useState<Chat | null>(null);
@@ -187,11 +198,19 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     let match;
 
     while ((match = whatsappRegex.exec(chatText)) !== null) {
+      const timestamp = match[1].trim();
+      const sender = match[2].trim();
+      const message = match[3].trim();
+
+      // Generate deterministic ID based on content
+      const contentForHash = `${timestamp}-${sender}-${message}`;
+      const deterministicId = hashString(contentForHash);
+
       messages.push({
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: match[1].trim(),
-        sender: match[2].trim(),
-        message: match[3].trim(),
+        id: deterministicId,
+        timestamp,
+        sender,
+        message,
       });
     }
 
@@ -201,11 +220,19 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
         /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
 
       while ((match = telegramRegex.exec(chatText)) !== null) {
+        const sender = match[1].trim();
+        const timestamp = match[2].trim();
+        const message = match[3].trim();
+
+        // Generate deterministic ID based on content
+        const contentForHash = `${timestamp}-${sender}-${message}`;
+        const deterministicId = hashString(contentForHash);
+
         messages.push({
-          id: Math.random().toString(36).substr(2, 9),
-          sender: match[1].trim(),
-          timestamp: match[2].trim(),
-          message: match[3].trim(),
+          id: deterministicId,
+          sender,
+          timestamp,
+          message,
         });
       }
     }
