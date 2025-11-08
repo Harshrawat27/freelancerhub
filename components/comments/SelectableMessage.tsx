@@ -96,7 +96,10 @@ export function SelectableMessage({
   // Close button when clicking elsewhere
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (showCommentButton && !(e.target as HTMLElement).closest('.comment-button')) {
+      if (
+        showCommentButton &&
+        !(e.target as HTMLElement).closest('.comment-button')
+      ) {
         setShowCommentButton(false);
       }
     };
@@ -138,8 +141,8 @@ export function SelectableMessage({
         <span
           key={`highlight-${idx}`}
           className={cn(
-            'bg-green-500 cursor-pointer transition-opacity',
-            highlight.isActive ? 'bg-opacity-100' : 'bg-opacity-50'
+            'highlight-span cursor-pointer transition-opacity',
+            highlight.isActive ? 'bg-green-500' : 'bg-green-500/50'
           )}
           onClick={() => onHighlightClick(highlight.threadId)}
         >

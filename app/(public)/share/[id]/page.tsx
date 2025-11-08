@@ -70,6 +70,29 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     getUser();
   }, []);
 
+  // Deselect active thread when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Don't deselect if clicking on a highlight, comment thread, or interactive elements
+      if (
+        target.closest('.highlight-span') ||
+        target.closest('.comment-thread-card') ||
+        target.closest('.comment-input') ||
+        target.closest('textarea') ||
+        target.closest('button')
+      ) {
+        return;
+      }
+
+      setActiveThreadId(null);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     const fetchSharedChat = async () => {
       try {
@@ -363,9 +386,18 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     return threads.filter((thread) => thread.messageId === messageId);
   };
 
+  // Get all threads with comments (only show threads that have at least one comment)
+  const threadsWithComments = threads.filter(
+    (thread) => thread.comments && thread.comments.length > 0
+  );
+
+  // Check if sidebar should be visible
+  const showCommentsSidebar =
+    activeThreadId !== null || threadsWithComments.length > 0;
+
   return (
     <div className='min-h-screen bg-background p-6'>
-      <div className='max-w-6xl mx-auto'>
+      <div className='max-w-7xl mx-auto'>
         <Topbar pageName={chat?.title || 'Loading...'} />
 
         {isConnected && (
@@ -375,93 +407,110 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
           </div>
         )}
 
-        {/* Chat Content with Inline Comments */}
-        <div className='bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6'>
-          <div className='space-y-6'>
-            {parsedMessages.map((msg) => {
-              const position = getSenderPosition(msg.sender);
-              const isLeft = position === 'left';
-              const messageThreads = getMessageThreads(msg.id);
-              const highlights = getMessageHighlights(msg.id);
+        <div className='flex flex-row gap-6'>
+          {/* Chat Content */}
+          <div
+            className={cn(
+              'bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 transition-all',
+              showCommentsSidebar ? 'w-1/2' : 'w-full'
+            )}
+          >
+            <div className='space-y-6'>
+              {parsedMessages.map((msg) => {
+                const position = getSenderPosition(msg.sender);
+                const isLeft = position === 'left';
+                const highlights = getMessageHighlights(msg.id);
 
-              return (
-                <div key={msg.id} className='space-y-3'>
-                  {/* Message Bubble */}
-                  <div
-                    className={cn(
-                      'flex',
-                      isLeft ? 'justify-start' : 'justify-end'
-                    )}
-                  >
-                    <div className={cn('max-w-[75%]')}>
-                      <div
-                        className={cn(
-                          'rounded-lg p-3 shadow-sm',
-                          isLeft
-                            ? 'bg-background text-foreground'
-                            : 'bg-primary/70 text-primary-foreground'
-                        )}
-                      >
-                        <p className='font-medium text-sm mb-1 opacity-50'>
-                          {msg.sender}
-                        </p>
-                        <SelectableMessage
-                          messageId={msg.id}
-                          content={msg.message}
-                          highlights={highlights}
-                          onTextSelected={handleTextSelected}
-                          onHighlightClick={handleHighlightClick}
-                          className='text-sm'
-                        />
-                        <p
+                return (
+                  <div key={msg.id}>
+                    {/* Message Bubble */}
+                    <div
+                      className={cn(
+                        'flex',
+                        isLeft ? 'justify-start' : 'justify-end'
+                      )}
+                    >
+                      <div className={cn('max-w-[75%]')}>
+                        <div
                           className={cn(
-                            'text-xs mt-2 opacity-50',
+                            'rounded-lg p-3 shadow-sm',
                             isLeft
-                              ? 'text-muted-foreground'
-                              : 'text-primary-foreground/70'
+                              ? 'bg-background text-foreground'
+                              : 'bg-primary/70 text-primary-foreground'
                           )}
                         >
-                          {msg.timestamp}
-                        </p>
+                          <p className='font-medium text-sm mb-1 opacity-50'>
+                            {msg.sender}
+                          </p>
+                          <SelectableMessage
+                            messageId={msg.id}
+                            content={msg.message}
+                            highlights={highlights}
+                            onTextSelected={handleTextSelected}
+                            onHighlightClick={handleHighlightClick}
+                            className='text-sm'
+                          />
+                          <p
+                            className={cn(
+                              'text-xs mt-2 opacity-50',
+                              isLeft
+                                ? 'text-muted-foreground'
+                                : 'text-primary-foreground/70'
+                            )}
+                          >
+                            {msg.timestamp}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Inline Comment Threads for this message */}
-                  {messageThreads.length > 0 && (
-                    <div className='ml-8 space-y-3'>
-                      {messageThreads.map((thread) => (
-                        <div
-                          key={thread.id}
-                          ref={(el) => {
-                            threadRefs.current[thread.id] = el;
-                          }}
-                        >
-                          <InlineCommentThread
-                            threadId={thread.id}
-                            selectedText={thread.selectedText}
-                            comments={thread.comments}
-                            onAddComment={handleAddComment}
-                            onEditComment={handleEditComment}
-                            onDeleteComment={handleDeleteComment}
-                            currentUserId={currentUser?.id}
-                            isActive={thread.id === activeThreadId}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {!currentUser && (
+              <Card className='p-4 mt-6 bg-muted/50 text-center'>
+                <p className='text-sm text-muted-foreground'>
+                  Sign in to select text and add comments
+                </p>
+              </Card>
+            )}
           </div>
 
-          {!currentUser && (
-            <Card className='p-4 mt-6 bg-muted/50 text-center'>
-              <p className='text-sm text-muted-foreground'>
-                Sign in to select text and add comments
-              </p>
-            </Card>
+          {/* Comments Sidebar - Only show if there's an active thread or threads with comments */}
+          {showCommentsSidebar && (
+            <div className='w-1/2'>
+              <h3 className='text-lg font-semibold mb-4'>Comments</h3>
+              {/* <div className='space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto p-1'> */}
+              <div className='space-y-4 p-1'>
+                {threads
+                  .filter(
+                    (thread) =>
+                      // Show thread if it's active OR if it has comments
+                      thread.id === activeThreadId ||
+                      (thread.comments && thread.comments.length > 0)
+                  )
+                  .map((thread) => (
+                    <div
+                      key={thread.id}
+                      ref={(el) => {
+                        threadRefs.current[thread.id] = el;
+                      }}
+                    >
+                      <InlineCommentThread
+                        threadId={thread.id}
+                        selectedText={thread.selectedText}
+                        comments={thread.comments}
+                        onAddComment={handleAddComment}
+                        onEditComment={handleEditComment}
+                        onDeleteComment={handleDeleteComment}
+                        currentUserId={currentUser?.id}
+                        isActive={thread.id === activeThreadId}
+                      />
+                    </div>
+                  ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

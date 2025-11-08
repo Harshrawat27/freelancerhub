@@ -41,7 +41,7 @@ export function CommentInput({
   };
 
   return (
-    <div className='flex gap-2'>
+    <div className='comment-input flex gap-2'>
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}

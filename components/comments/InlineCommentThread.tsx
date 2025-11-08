@@ -51,7 +51,7 @@ export function InlineCommentThread({
   return (
     <Card
       className={cn(
-        'p-4 space-y-3 transition-all',
+        'comment-thread-card p-4 space-y-3 transition-all',
         isActive && 'ring-2 ring-primary'
       )}
     >
