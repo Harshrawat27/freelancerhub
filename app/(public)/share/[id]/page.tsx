@@ -49,6 +49,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [positionTrigger, setPositionTrigger] = useState(0);
   const [pendingSelection, setPendingSelection] = useState<{
     messageId: string;
     text: string;
@@ -57,6 +58,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   } | null>(null);
   const router = useRouter();
   const threadRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const commentsContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Get current user info
   useEffect(() => {
@@ -141,6 +144,25 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     userAvatar: currentUser?.image,
   });
 
+  // Sort threads by message order (based on message position in parsedMessages array)
+  const sortedThreads = React.useMemo(() => {
+    const messageOrder = new Map(
+      parsedMessages.map((msg, idx) => [msg.id, idx])
+    );
+
+    return threads
+      .filter(
+        (thread) =>
+          thread.id === activeThreadId ||
+          (thread.comments && thread.comments.length > 0)
+      )
+      .sort((a, b) => {
+        const orderA = messageOrder.get(a.messageId) ?? Infinity;
+        const orderB = messageOrder.get(b.messageId) ?? Infinity;
+        return orderA - orderB;
+      });
+  }, [threads, parsedMessages, activeThreadId]);
+
   // Handle text selection - create thread
   const handleTextSelected = async (
     messageId: string,
@@ -182,14 +204,22 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const handleHighlightClick = (threadId: string) => {
     setActiveThreadId(threadId);
 
-    // Scroll to thread
+    // Force re-render to recalculate positions after DOM updates
     setTimeout(() => {
-      threadRefs.current[threadId]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
+      setPositionTrigger((prev) => prev + 1);
     }, 100);
   };
+
+  // Recalculate positions when active thread changes
+  useEffect(() => {
+    if (activeThreadId) {
+      // Small delay to ensure DOM is updated
+      const timer = setTimeout(() => {
+        setPositionTrigger((prev) => prev + 1);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeThreadId]);
 
   // Handle adding comment to thread
   const handleAddComment = async (threadId: string, content: string) => {
@@ -395,6 +425,32 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const showCommentsSidebar =
     activeThreadId !== null || threadsWithComments.length > 0;
 
+  // Calculate comment position offset based on active thread
+  const getCommentOffset = (thread: any, index: number) => {
+    if (!activeThreadId) return 0;
+
+    const activeThread = sortedThreads.find((t) => t.id === activeThreadId);
+    if (!activeThread) return 0;
+
+    const messageEl = messageRefs.current[activeThread.messageId];
+    const threadEl = threadRefs.current[activeThreadId];
+    const containerEl = commentsContainerRef.current;
+
+    if (!messageEl || !threadEl || !containerEl) return 0;
+
+    // Calculate where the active comment should be (aligned with its message)
+    const messageTop = messageEl.getBoundingClientRect().top;
+    const containerTop = containerEl.getBoundingClientRect().top;
+    const currentThreadTop = threadEl.getBoundingClientRect().top;
+
+    // Offset needed to align active thread with its message
+    const targetPosition = messageTop - containerTop;
+    const currentPosition = currentThreadTop - containerTop;
+    const offset = targetPosition - currentPosition;
+
+    return offset;
+  };
+
   return (
     <div className='min-h-screen bg-background p-6'>
       <div className='max-w-7xl mx-auto'>
@@ -422,7 +478,12 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
                 const highlights = getMessageHighlights(msg.id);
 
                 return (
-                  <div key={msg.id}>
+                  <div
+                    key={msg.id}
+                    ref={(el) => {
+                      messageRefs.current[msg.id] = el;
+                    }}
+                  >
                     {/* Message Bubble */}
                     <div
                       className={cn(
@@ -479,18 +540,23 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
 
           {/* Comments Sidebar - Only show if there's an active thread or threads with comments */}
           {showCommentsSidebar && (
-            <div className='w-1/2'>
-              <h3 className='text-lg font-semibold mb-4'>Comments</h3>
-              {/* <div className='space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto p-1'> */}
-              <div className='space-y-4 p-1'>
-                {threads
-                  .filter(
-                    (thread) =>
-                      // Show thread if it's active OR if it has comments
-                      thread.id === activeThreadId ||
-                      (thread.comments && thread.comments.length > 0)
-                  )
-                  .map((thread) => (
+            <div className='w-1/2 overflow-hidden'>
+              <h3 className='text-lg font-semibold mb-4 bg-background relative z-10'>
+                Comments
+              </h3>
+              <div
+                ref={commentsContainerRef}
+                className='relative'
+                style={{
+                  transform:
+                    activeThreadId && positionTrigger >= 0
+                      ? `translateY(${getCommentOffset(null, 0)}px)`
+                      : 'none',
+                  transition: 'transform 0.3s ease-out',
+                }}
+              >
+                <div className='space-y-4 p-1'>
+                  {sortedThreads.map((thread, index) => (
                     <div
                       key={thread.id}
                       ref={(el) => {
@@ -509,6 +575,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
                       />
                     </div>
                   ))}
+                </div>
               </div>
             </div>
           )}

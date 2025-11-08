@@ -142,7 +142,7 @@ export function SelectableMessage({
           key={`highlight-${idx}`}
           className={cn(
             'highlight-span cursor-pointer transition-opacity',
-            highlight.isActive ? 'bg-green-500' : 'bg-green-500/50'
+            highlight.isActive ? 'bg-green-500 text-black' : 'bg-green-500/50'
           )}
           onClick={() => onHighlightClick(highlight.threadId)}
         >

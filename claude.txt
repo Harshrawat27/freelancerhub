@@ -21,3 +21,5 @@ todo left to launch it:
 - user without login can create chat but they have to share it with everyone can't share with particular email
 - they can't chat over it
 - connect it with chat
+
+- while adding comment sequence is not correct! i think we are treating one message not text, we have to fix it. 
