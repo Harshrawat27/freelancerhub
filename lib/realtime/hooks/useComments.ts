@@ -1,8 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRealtime } from './useRealtime';
 import { Comment, CreateCommentInput } from '../interfaces/comment.interface';
+
+// Import Liveblocks hooks - these will be available after wrapping with RoomProvider
+let useBroadcastEvent: any;
+let useEventListener: any;
+
+try {
+  const liveblocks = require('@liveblocks/react/suspense');
+  useBroadcastEvent = liveblocks.useBroadcastEvent;
+  useEventListener = liveblocks.useEventListener;
+} catch (e) {
+  // Fallback if not in Liveblocks context
+  console.warn('[useComments] Liveblocks not available');
+}
 
 interface UseCommentsOptions {
   chatId: string;
@@ -17,10 +29,12 @@ export function useComments({
   userName,
   userAvatar,
 }: UseCommentsOptions) {
-  const { broadcast, subscribe, isConnected } = useRealtime(`chat-${chatId}`);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use Liveblocks hooks for real-time functionality
+  const broadcast = useBroadcastEvent ? useBroadcastEvent() : null;
 
   // Fetch initial comments from database
   useEffect(() => {
@@ -47,30 +61,22 @@ export function useComments({
     fetchComments();
   }, [chatId]);
 
-  // Subscribe to real-time comment events
-  useEffect(() => {
-    if (!isConnected) return;
+  // Subscribe to real-time comment events using Liveblocks
+  if (useEventListener) {
+    useEventListener(({ event }: { event: any }) => {
+      console.log('[useComments] Received event:', event);
 
-    const unsubscribeCreate = subscribe<Comment>('comment:created', (comment) => {
-      setComments((prev) => [...prev, comment]);
+      if (event.type === 'comment:created') {
+        setComments((prev) => [...prev, event.payload]);
+      } else if (event.type === 'comment:updated') {
+        setComments((prev) =>
+          prev.map((c) => (c.id === event.payload.id ? event.payload : c))
+        );
+      } else if (event.type === 'comment:deleted') {
+        setComments((prev) => prev.filter((c) => c.id !== event.payload));
+      }
     });
-
-    const unsubscribeUpdate = subscribe<Comment>('comment:updated', (comment) => {
-      setComments((prev) =>
-        prev.map((c) => (c.id === comment.id ? comment : c))
-      );
-    });
-
-    const unsubscribeDelete = subscribe<string>('comment:deleted', (commentId) => {
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    });
-
-    return () => {
-      unsubscribeCreate();
-      unsubscribeUpdate();
-      unsubscribeDelete();
-    };
-  }, [isConnected, subscribe]);
+  }
 
   const createComment = async (input: Omit<CreateCommentInput, 'userId' | 'userName' | 'userAvatar'>) => {
     try {
@@ -92,13 +98,16 @@ export function useComments({
 
       const newComment = await response.json();
 
-      // Broadcast to others in real-time
-      broadcast({
-        type: 'comment:created',
-        payload: newComment,
-        timestamp: Date.now(),
-        userId,
-      });
+      // Update local state immediately (optimistic update)
+      setComments((prev) => [...prev, newComment]);
+
+      // Broadcast to others in real-time using Liveblocks
+      if (broadcast) {
+        broadcast({
+          type: 'comment:created',
+          payload: newComment,
+        });
+      }
 
       return newComment;
     } catch (err) {
@@ -121,13 +130,18 @@ export function useComments({
 
       const updatedComment = await response.json();
 
-      // Broadcast to others
-      broadcast({
-        type: 'comment:updated',
-        payload: updatedComment,
-        timestamp: Date.now(),
-        userId,
-      });
+      // Update local state immediately (optimistic update)
+      setComments((prev) =>
+        prev.map((c) => (c.id === updatedComment.id ? updatedComment : c))
+      );
+
+      // Broadcast to others using Liveblocks
+      if (broadcast) {
+        broadcast({
+          type: 'comment:updated',
+          payload: updatedComment,
+        });
+      }
 
       return updatedComment;
     } catch (err) {
@@ -146,13 +160,16 @@ export function useComments({
         throw new Error('Failed to delete comment');
       }
 
-      // Broadcast to others
-      broadcast({
-        type: 'comment:deleted',
-        payload: commentId,
-        timestamp: Date.now(),
-        userId,
-      });
+      // Update local state immediately (optimistic update)
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+
+      // Broadcast to others using Liveblocks
+      if (broadcast) {
+        broadcast({
+          type: 'comment:deleted',
+          payload: commentId,
+        });
+      }
     } catch (err) {
       console.error('[useComments] Error deleting comment:', err);
       throw err;
@@ -163,7 +180,7 @@ export function useComments({
     comments,
     isLoading,
     error,
-    isConnected,
+    isConnected: !!broadcast, // Connected if broadcast is available
     createComment,
     updateComment,
     deleteComment,

@@ -9,6 +9,7 @@ import { CommentThread } from '@/components/comments/CommentThread';
 import { Card } from '@/components/ui/card';
 import { MessageSquare, AlertCircle } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { LiveblocksRoomProvider } from '@/lib/realtime/providers/LiveblocksRoomProvider';
 
 interface Message {
   id: string;
@@ -28,12 +29,8 @@ interface Chat {
   updatedAt: string;
 }
 
-export default function SharedChatPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const [id, setId] = useState<string | null>(null);
+// Inner component that uses Liveblocks hooks
+function SharedChatPageContent({ chatId }: { chatId: string }) {
   const [chat, setChat] = useState<Chat | null>(null);
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,10 +38,6 @@ export default function SharedChatPage({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showComments, setShowComments] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    params.then((p) => setId(p.id));
-  }, [params]);
 
   // Get current user info
   useEffect(() => {
@@ -59,11 +52,9 @@ export default function SharedChatPage({
   }, []);
 
   useEffect(() => {
-    if (!id) return;
-
     const fetchSharedChat = async () => {
       try {
-        const response = await fetch(`/api/share/${id}`);
+        const response = await fetch(`/api/share/${chatId}`);
 
         if (!response.ok) {
           if (response.status === 403) {
@@ -89,9 +80,9 @@ export default function SharedChatPage({
     };
 
     fetchSharedChat();
-  }, [id]);
+  }, [chatId]);
 
-  // Initialize comments hook
+  // Initialize comments hook (now inside Liveblocks provider)
   const {
     comments,
     isLoading: commentsLoading,
@@ -101,7 +92,7 @@ export default function SharedChatPage({
     updateComment,
     deleteComment,
   } = useComments({
-    chatId: id || '',
+    chatId: chatId,
     userId: currentUser?.id || 'anonymous',
     userName: currentUser?.name || 'Anonymous User',
     userAvatar: currentUser?.image,
@@ -408,5 +399,32 @@ export default function SharedChatPage({
         </div>
       </div>
     </div>
+  );
+}
+
+// Outer wrapper component that provides the Liveblocks room
+export default function SharedChatPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const [id, setId] = useState<string | null>(null);
+
+  useEffect(() => {
+    params.then((p) => setId(p.id));
+  }, [params]);
+
+  if (!id) {
+    return (
+      <div className='min-h-screen bg-background flex items-center justify-center'>
+        <div className='text-muted-foreground'>Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <LiveblocksRoomProvider roomId={`chat-${id}`}>
+      <SharedChatPageContent chatId={id} />
+    </LiveblocksRoomProvider>
   );
 }

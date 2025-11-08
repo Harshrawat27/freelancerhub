@@ -46,7 +46,7 @@ export function CommentThread({
               : undefined
           }
           currentUserId={currentUserId}
-          showReplyButton={depth < 2} // Limit nesting to 2 levels
+          showReplyButton={true} // Allow unlimited nesting
         />
 
         {/* Render replies */}
