@@ -25,14 +25,16 @@ export class LiveblocksRealtimeService implements RealtimeService {
       });
 
       // Set up Liveblocks-specific event listeners
-      this.room.subscribe('event', (eventMessage: any) => {
-        // Liveblocks wraps the event in { connectionId, event }
-        // We need to extract the actual event from eventMessage.event
-        if (eventMessage && eventMessage.event) {
-          console.log('[Liveblocks] Received event:', eventMessage.event);
-          this.handleIncomingEvent(eventMessage.event);
-        }
-      });
+      if (this.room) {
+        this.room.subscribe('event', (eventMessage: any) => {
+          // Liveblocks wraps the event in { connectionId, event }
+          // We need to extract the actual event from eventMessage.event
+          if (eventMessage && eventMessage.event) {
+            console.log('[Liveblocks] Received event:', eventMessage.event);
+            this.handleIncomingEvent(eventMessage.event);
+          }
+        });
+      }
 
       // Subscribe to presence changes
       if (this.room && 'subscribe' in this.room) {

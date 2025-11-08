@@ -119,7 +119,7 @@ export function SelectableMessage({
       (a, b) => a.startOffset - b.startOffset
     );
 
-    const parts: JSX.Element[] = [];
+    const parts: React.ReactElement[] = [];
     let currentIndex = 0;
 
     sortedHighlights.forEach((highlight, idx) => {
