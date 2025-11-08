@@ -52,7 +52,7 @@ export function InlineCommentThread({
     <Card
       className={cn(
         'comment-thread-card p-4 space-y-3 transition-all',
-        isActive && 'ring-2 ring-primary'
+        isActive && 'bg-secondary shadow-lg'
       )}
     >
       {/* Header with selected text */}
