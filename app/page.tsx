@@ -13,8 +13,11 @@ export default function Home() {
         {/* Header Section */}
         <header className='border-b border-dashed border-border px-4 py-3 md:px-6 md:py-4'>
           <div className='flex justify-between items-center'>
-            <div className='font-heading text-xl md:text-2xl font-bold text-white'>
-              ChatShare
+            <div className='flex flex-row gap-2'>
+              <Image src='/logo.svg' height={40} width={40} alt='logo' />
+              <div className='font-heading text-xl md:text-2xl font-bold text-white'>
+                ChatShare
+              </div>
             </div>
             <ThemeToggle />
           </div>

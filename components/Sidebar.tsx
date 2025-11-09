@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
+import Image from 'next/image';
 
 // Dummy data
 const dummyProjects = [
@@ -100,9 +101,12 @@ export function Sidebar() {
       <div className='p-4'>
         {/* Logo/Brand */}
         <div className='mb-4 pb-3 border-b border-dashed border-border'>
-          <h2 className='font-heading text-xl font-bold text-white'>
-            ChatShare
-          </h2>
+          <div className='flex flex-row gap-2 items-center'>
+            <Image src='/logo.svg' height={50} width={50} alt='logo' />
+            <h2 className='font-heading text-xl font-bold text-white'>
+              ChatShare
+            </h2>
+          </div>
         </div>
 
         {/* Menu Section */}
