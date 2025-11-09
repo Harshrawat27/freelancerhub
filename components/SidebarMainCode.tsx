@@ -566,7 +566,7 @@ export function Sidebar() {
                       onClick={async () => {
                         await authClient.signIn.social({
                           provider: 'google',
-                          callbackURL: '/dashboard',
+                          callbackURL: '/create-chats',
                         });
                       }}
                       className={cn(
@@ -645,7 +645,7 @@ export function Sidebar() {
                     await authClient.signOut({
                       fetchOptions: {
                         onSuccess: () => {
-                          window.location.href = '/dashboard';
+                          window.location.href = '/';
                         },
                       },
                     });
