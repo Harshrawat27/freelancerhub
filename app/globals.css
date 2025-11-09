@@ -208,11 +208,13 @@
 
 .margin-left-right-side {
   margin-left: 260px;
-  transition: margin-left 0.3s ease-in-out;
+  transition: margin-left 0.3s;
+  transition-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 .move-left {
-  transition: left 0.3s ease-in-out;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 /* Disable transitions during theme switching for instant theme change */
