@@ -54,7 +54,7 @@ export function Sidebar() {
       <div className='p-4'>
         {/* Logo/Brand */}
         <div className='mb-8 pb-3 border-b border-dashed border-border'>
-          <div className='flex flex-row gap-2 items-center'>
+          <div className='flex flex-row gap-2 items-center h-[50px]'>
             <Image src='/logo.svg' height={50} width={50} alt='logo' />
             <h2 className='font-heading text-xl font-bold text-black dark:text-white'>
               ChatShare
