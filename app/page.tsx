@@ -55,7 +55,7 @@ export default function Home() {
                 Turn messy chats into structured insights. Hide what matters,
                 extract tasks, create summaries, and share with your team.
               </p>
-              <Link href='/dashboard'>
+              <Link href='/create-chats'>
                 <button
                   className={cn(
                     'px-6 py-2.5 rounded-lg text-sm font-medium',
@@ -158,7 +158,7 @@ export default function Home() {
                 'bg-primary text-primary-foreground',
                 'shadow-md shadow-primary/20 button-highlighted-shadow',
                 'hover:bg-primary/90',
-                'transition-colors duration-200'
+                'transition-colors duration-200 cursor-pointer'
               )}
             >
               Start Free Trial
@@ -169,7 +169,7 @@ export default function Home() {
                 'bg-secondary text-secondary-foreground',
                 'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
                 'hover:bg-secondary/80',
-                'transition-colors duration-200'
+                'transition-colors duration-200 cursor-pointer'
               )}
             >
               Learn More
