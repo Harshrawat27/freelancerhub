@@ -26,7 +26,7 @@ export default function Home() {
         {/* Hero + Features Section (First Fold) */}
         <section className='border-b border-dashed border-border relative'>
           {/* Hero */}
-          <div className='px-4 md:px-8 pt-43 pb-28 md:pt-43 md:pb-28 relative overflow-hidden'>
+          <div className='px-4 md:px-8 pt-41 pb-28 md:pt-41 md:pb-28 relative overflow-hidden'>
             {/* Background Images */}
             <Image
               src='/black-bg.webp'
