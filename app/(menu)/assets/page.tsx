@@ -3,14 +3,14 @@
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
 
-export default function Dashboard() {
+export default function Assets() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
       <main className='margin-left-right-side p-6'>
-        <Topbar pageName='Dashboard' />
+        <Topbar pageName='Assets' />
         <p className='text-muted-foreground mt-2'>
-          Welcome to your dashboard!!
+          Welcome to your Assets Page!!
         </p>
       </main>
     </div>

@@ -52,7 +52,7 @@ export default function Members() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[260px] p-6'>
+      <main className='margin-left-right-side p-6'>
         <Topbar pageName='Team Members' />
 
         {isLoading ? (

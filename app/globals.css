@@ -205,3 +205,17 @@
 .bg-popover {
   background-color: var(--background);
 }
+
+.margin-left-right-side {
+  margin-left: 260px;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.move-left {
+  transition: left 0.3s ease-in-out;
+}
+
+/* Disable transitions during theme switching for instant theme change */
+.theme-switching * {
+  transition: none !important;
+}

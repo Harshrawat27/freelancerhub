@@ -34,7 +34,7 @@ export default function Chats() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[260px] p-6'>
+      <main className='margin-left-right-side p-6'>
         <Topbar pageName='Chats' />
         {/* <p className='text-muted-foreground mt-2 mb-6'>
           View and manage all your chats

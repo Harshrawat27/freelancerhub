@@ -528,7 +528,7 @@ export default function ChatDetail({
     return (
       <div className='min-h-screen bg-background transition-colors duration-300'>
         <Sidebar />
-        <main className='ml-[260px] p-6 flex flex-col min-h-screen'>
+        <main className='margin-left-right-side p-6 flex flex-col min-h-screen'>
           <Topbar pageName='Chat' />
           <div className='flex items-center justify-center flex-1'>
             <div className='text-center'>
@@ -545,7 +545,7 @@ export default function ChatDetail({
     return (
       <div className='min-h-screen bg-background transition-colors duration-300'>
         <Sidebar />
-        <main className='ml-[260px] p-6 flex flex-col min-h-screen'>
+        <main className='margin-left-right-side p-6 flex flex-col min-h-screen'>
           <Topbar pageName='Chat' />
           <div className='flex items-center justify-center flex-1'>
             <div className='text-center'>
@@ -560,7 +560,7 @@ export default function ChatDetail({
   return (
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
-      <main className='ml-[260px] p-6 flex flex-col min-h-screen max-h-screen'>
+      <main className='margin-left-right-side p-6 flex flex-col min-h-screen max-h-screen'>
         <Topbar pageName={chat.title} />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
@@ -569,7 +569,7 @@ export default function ChatDetail({
           <div className='flex flex-col overflow-y-auto'>
             {/* Raw Chat Text */}
             {/* <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] grow flex flex-col pb-0 rounded-b-none'> */}
-            <div className='rounded-lg p-4 grow flex flex-col pb-0 rounded-b-none'>
+            <div className='rounded-lg p-1 grow flex flex-col pb-0 rounded-b-none'>
               <h2 className='font-heading text-xl font-bold text-foreground mb-2'>
                 {editMode ? 'Edit Chat' : 'Chat Source'}
               </h2>
@@ -614,7 +614,7 @@ export default function ChatDetail({
             {/* Title and Sender Assignment */}
             {parsedMessages.length > 0 && (
               // <div className='bg-secondary rounded-lg p-4 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] pt-4 rounded-t-none'>
-              <div className='rounded-lg p-4 pt-4 rounded-t-none'>
+              <div className='rounded-lg p-1 pt-4 rounded-t-none'>
                 {/* Title Input */}
                 {/* <div className='mb-4'>
                   <label className='text-sm font-medium text-foreground mb-2 block'>
@@ -1033,7 +1033,8 @@ export default function ChatDetail({
                                           {
                                             method: 'PUT',
                                             headers: {
-                                              'Content-Type': 'application/json',
+                                              'Content-Type':
+                                                'application/json',
                                             },
                                             body: JSON.stringify({
                                               isPublic: false,
@@ -1074,7 +1075,8 @@ export default function ChatDetail({
                                           {
                                             method: 'PUT',
                                             headers: {
-                                              'Content-Type': 'application/json',
+                                              'Content-Type':
+                                                'application/json',
                                             },
                                             body: JSON.stringify({
                                               isPublic: true,

@@ -15,9 +15,22 @@ export function ThemeToggle() {
     return <div className='w-8 h-8 rounded-lg bg-secondary animate-pulse' />;
   }
 
+  const handleThemeChange = () => {
+    // Add class to disable transitions
+    document.documentElement.classList.add('theme-switching');
+
+    // Switch theme
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+
+    // Remove class after a brief delay to re-enable transitions
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-switching');
+    }, 100);
+  };
+
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={handleThemeChange}
       className='
         relative w-8 h-8 rounded-lg
         transition-colors duration-200

@@ -12,10 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { authClient, useSession } from '@/lib/auth-client';
-import UploadProject from '@/components/UploadProject';
-import UploadProfile from '@/components/UploadProfile';
 import { LoginSkeleton } from '@/components/LoginSkeleton';
-import { useState, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,53 +24,9 @@ import {
 import { ChevronsUpDown, LogOut } from 'lucide-react';
 import Image from 'next/image';
 
-// Dummy data
-const dummyProjects = [
-  { id: 1, name: 'Website Redesign', color: '#EE575A' },
-  { id: 2, name: 'Mobile App', color: '#4A90E2' },
-  { id: 3, name: 'Brand Identity', color: '#7ED321' },
-];
-
-const dummyMembers = [
-  { id: 1, name: 'Sarah Johnson', role: 'Designer', avatar: 'SJ' },
-  { id: 2, name: 'Mike Chen', role: 'Developer', avatar: 'MC' },
-  { id: 3, name: 'Emma Wilson', role: 'Manager', avatar: 'EW' },
-];
-
 export function Sidebar() {
   const pathname = usePathname();
   const session = useSession();
-
-  // Load expanded state from localStorage
-  const [expandedMenus, setExpandedMenus] = useState<{
-    invoice: boolean;
-    proposal: boolean;
-    chats: boolean;
-  }>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebar-expanded-menus');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    }
-    return { invoice: false, proposal: false, chats: false };
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'sidebar-expanded-menus',
-        JSON.stringify(expandedMenus)
-      );
-    }
-  }, [expandedMenus]);
-
-  const toggleMenu = (menu: 'invoice' | 'proposal' | 'chats') => {
-    setExpandedMenus((prev) => ({
-      ...prev,
-      [menu]: !prev[menu],
-    }));
-  };
 
   // Get user initials from name
   const getUserInitials = (name: string) => {
@@ -95,12 +48,12 @@ export function Sidebar() {
         'overflow-y-auto',
         'shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)]',
         'dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
-        'flex flex-col justify-between'
+        'flex flex-col justify-between z-10 move-left'
       )}
     >
       <div className='p-4'>
         {/* Logo/Brand */}
-        <div className='mb-4 pb-3 border-b border-dashed border-border'>
+        <div className='mb-8 pb-3 border-b border-dashed border-border'>
           <div className='flex flex-row gap-2 items-center'>
             <Image src='/logo.svg' height={50} width={50} alt='logo' />
             <h2 className='font-heading text-xl font-bold text-black dark:text-white'>
@@ -110,16 +63,16 @@ export function Sidebar() {
         </div>
 
         {/* Menu Section */}
-        <div className='mb-4'>
+        <div className='mb-8'>
           <h3 className='px-3 py-1 text-foreground font-medium text-sm'>
             Menu
           </h3>
           <div className='mt-1 space-y-1'>
             <Link
-              href='/dashboard'
+              href='/chats'
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
-                pathname === '/dashboard'
+                pathname === '/chats'
                   ? 'bg-background text-foreground opacity-100'
                   : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
@@ -134,400 +87,74 @@ export function Sidebar() {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth={2}
-                  d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
+                  d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
                 />
               </svg>
-              <span>Dashboard</span>
+              <span>All Chats</span>
             </Link>
 
-            {/* Invoice Menu */}
-            <div>
-              <div
-                onClick={() => toggleMenu('invoice')}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
-                  pathname === '/create-invoice' || pathname === '/invoices'
-                    ? 'bg-background text-foreground opacity-100'
-                    : 'text-muted-foreground opacity-50 hover:opacity-100'
-                )}
-              >
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                  />
-                </svg>
-                <span>Invoice</span>
-                <svg
-                  className={cn(
-                    'w-3 h-3 ml-auto transition-transform duration-200',
-                    expandedMenus.invoice && 'rotate-90'
-                  )}
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M9 5l7 7-7 7'
-                  />
-                </svg>
-              </div>
-              {expandedMenus.invoice && (
-                <div className='ml-6 mt-1 space-y-1 relative'>
-                  {/* Continuous vertical line */}
-                  <div className='absolute left-0 top-0 h-[calc(100%-0.8rem)] w-px border-l-2 border-dashed border-border' />
-
-                  <Link
-                    href='/create-invoice'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/create-invoice'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>Create Invoice</span>
-                  </Link>
-                  <Link
-                    href='/invoices'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/invoices'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>All Invoices</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Proposal Menu */}
-            <div>
-              <div
-                onClick={() => toggleMenu('proposal')}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
-                  pathname === '/create-proposal' || pathname === '/proposals'
-                    ? 'bg-background text-foreground opacity-100'
-                    : 'text-muted-foreground opacity-50 hover:opacity-100'
-                )}
-              >
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                  />
-                </svg>
-                <span>Proposal</span>
-                <svg
-                  className={cn(
-                    'w-3 h-3 ml-auto transition-transform duration-200',
-                    expandedMenus.proposal && 'rotate-90'
-                  )}
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M9 5l7 7-7 7'
-                  />
-                </svg>
-              </div>
-              {expandedMenus.proposal && (
-                <div className='ml-6 mt-1 space-y-1 relative'>
-                  {/* Continuous vertical line */}
-                  <div className='absolute left-0 top-0 h-[calc(100%-0.8rem)] w-px border-l-2 border-dashed border-border' />
-
-                  <Link
-                    href='/create-proposal'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/create-proposal'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>Create Proposal</span>
-                  </Link>
-                  <Link
-                    href='/proposals'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/proposals'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>All Proposals</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Chats Menu */}
-            <div>
-              <div
-                onClick={() => toggleMenu('chats')}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer',
-                  pathname === '/create-chats' || pathname === '/chats'
-                    ? 'bg-background text-foreground opacity-100'
-                    : 'text-muted-foreground opacity-50 hover:opacity-100'
-                )}
-              >
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
-                  />
-                </svg>
-                <span>Chats</span>
-                <svg
-                  className={cn(
-                    'w-3 h-3 ml-auto transition-transform duration-200',
-                    expandedMenus.chats && 'rotate-90'
-                  )}
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M9 5l7 7-7 7'
-                  />
-                </svg>
-              </div>
-              {expandedMenus.chats && (
-                <div className='ml-6 mt-1 space-y-1 relative'>
-                  {/* Continuous vertical line */}
-                  <div className='absolute left-0 top-0 h-[calc(100%-0.8rem)] w-px border-l-2 border-dashed border-border' />
-
-                  <Link
-                    href='/create-chats'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/create-chats'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>Create Chats</span>
-                  </Link>
-                  <Link
-                    href='/chats'
-                    className={cn(
-                      'flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm relative cursor-pointer',
-                      pathname === '/chats'
-                        ? 'text-foreground opacity-100'
-                        : 'text-muted-foreground opacity-50 hover:opacity-100'
-                    )}
-                  >
-                    <div className='absolute left-0 top-1/2 w-5 border-t-2 border-dashed border-border' />
-                    <span>All Chats</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Project Section */}
-        <div className='mb-4'>
-          <div className='flex flex-row justify-between'>
             <Link
-              href='/projects'
+              href='/assets'
               className={cn(
-                pathname === '/projects'
-                  ? 'bg-background text-foreground opacity-100 rounded-lg'
-                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100 rounded-lg'
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
+                pathname === '/assets'
+                  ? 'bg-background text-foreground opacity-100'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
             >
-              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
-                Projects
-              </h3>
-            </Link>
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className='group p-1 rounded-full transition-colors duration-200'>
-                  <svg
-                    className='w-5 h-5 cursor-pointer'
-                    fill='none'
-                    strokeWidth={1}
-                    viewBox='0 0 24 24'
-                  >
-                    <circle
-                      cx='12'
-                      cy='12'
-                      r='10'
-                      className='stroke-foreground group-hover:fill-primary transition-all duration-200'
-                    />
-                    <line
-                      x1='12'
-                      y1='8'
-                      x2='12'
-                      y2='16'
-                      className='stroke-foreground transition-all duration-200'
-                    />
-                    <line
-                      x1='8'
-                      y1='12'
-                      x2='16'
-                      y2='12'
-                      className='stroke-foreground transition-all duration-200'
-                    />
-                  </svg>
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Project</DialogTitle>
-                  <DialogDescription>
-                    Create a new project to organize your work and track
-                    progress.
-                  </DialogDescription>
-                </DialogHeader>
-                <UploadProject />
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className='mt-1 space-y-1'>
-            {dummyProjects.map((project) => (
-              <div
-                key={project.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background cursor-pointer opacity-50 hover:opacity-100'
+              <svg
+                className='w-4 h-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
               >
-                <div
-                  className='w-3 h-3 rounded-full shrink-0'
-                  style={{ backgroundColor: project.color }}
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
                 />
-                <span className='text-sm text-muted-foreground truncate'>
-                  {project.name}
-                </span>
-              </div>
-            ))}
+              </svg>
+              <span>Assets</span>
+            </Link>
           </div>
         </div>
 
-        {/* Members Section */}
+        {/* Create Section */}
         <div className='mb-4'>
-          <div className='flex flex-row justify-between'>
+          <h3 className='px-3 py-1 text-foreground font-medium text-sm'>
+            Create
+          </h3>
+          <div className='mt-1 space-y-1'>
             <Link
-              href='/members'
+              href='/create-chats'
               className={cn(
-                pathname === '/members'
-                  ? 'bg-background text-foreground opacity-100 rounded-lg'
-                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100 rounded-lg'
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm',
+                pathname === '/create-chats'
+                  ? 'bg-background text-foreground opacity-100'
+                  : 'text-muted-foreground opacity-50 hover:bg-background hover:opacity-100'
               )}
             >
-              <h3 className='px-3 py-1 text-foreground font-medium text-sm rounded-lg hover:bg-background'>
-                Members
-              </h3>
-            </Link>
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className='group p-1 rounded-full transition-colors duration-200'>
-                  <svg
-                    className='w-5 h-5 cursor-pointer'
-                    fill='none'
-                    strokeWidth={1}
-                    viewBox='0 0 24 24'
-                  >
-                    <circle
-                      cx='12'
-                      cy='12'
-                      r='10'
-                      className='stroke-foreground group-hover:fill-primary transition-all duration-200'
-                    />
-                    <line
-                      x1='12'
-                      y1='8'
-                      x2='12'
-                      y2='16'
-                      className='stroke-foreground transition-all duration-200'
-                    />
-                    <line
-                      x1='8'
-                      y1='12'
-                      x2='16'
-                      y2='12'
-                      className='stroke-foreground transition-all duration-200'
-                    />
-                  </svg>
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Member</DialogTitle>
-                  <DialogDescription>
-                    Add a new team member to collaborate on projects and share
-                    tasks.
-                  </DialogDescription>
-                </DialogHeader>
-                <UploadProfile />
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className='mt-1 space-y-1'>
-            {dummyMembers.map((member) => (
-              <div
-                key={member.id}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-background cursor-pointer opacity-50 hover:opacity-100'
+              <svg
+                className='w-4 h-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
               >
-                <div className='w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0'>
-                  <span className='text-xs font-medium text-primary'>
-                    {member.avatar}
-                  </span>
-                </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm text-foreground truncate'>
-                    {member.name}
-                  </p>
-                  <p className='text-xs text-muted-foreground truncate'>
-                    {member.role}
-                  </p>
-                </div>
-              </div>
-            ))}
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                />
+              </svg>
+              <span>Create Chat</span>
+            </Link>
           </div>
         </div>
       </div>
 
+      {/* Bottom Sticky Bar */}
       <div className='sticky bottom-0'>
         {session.isPending ? (
           <div className='px-2 mb-2'>
