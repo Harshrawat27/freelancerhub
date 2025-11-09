@@ -47,9 +47,9 @@ export default function Home() {
 
             <div className='max-w-3xl text-center mx-auto relative z-10'>
               <h1 className='font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-foreground mx-auto'>
-                Transform Chats into
+                Share Chat
                 <br></br>
-                <span className='text-primary '> Actionable Insights</span>
+                <span className='text-primary '> Hide What Matters</span>
               </h1>
               <p className='text-sm md:text-base leading-relaxed mb-6 text-muted-foreground max-w-xl mx-auto'>
                 Turn messy chats into structured insights. Hide what matters,
