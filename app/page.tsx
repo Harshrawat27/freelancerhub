@@ -13,8 +13,8 @@ export default function Home() {
         {/* Header Section */}
         <header className='border-b border-dashed border-border px-4 py-3 md:px-6 md:py-4'>
           <div className='flex justify-between items-center'>
-            <div className='font-heading text-xl md:text-2xl font-bold text-foreground'>
-              ChatFlow
+            <div className='font-heading text-xl md:text-2xl font-bold text-white'>
+              ChatShare
             </div>
             <ThemeToggle />
           </div>
@@ -139,7 +139,7 @@ export default function Home() {
             Ready to streamline your workflow?
           </h2>
           <p className='text-sm md:text-base mb-6 text-muted-foreground max-w-xl mx-auto'>
-            Join freelancers and agencies who trust ChatFlow for their team
+            Join freelancers and agencies who trust ChatShare for their team
             collaboration.
           </p>
           <div className='flex flex-col sm:flex-row gap-3 justify-center items-center'>

@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ChatFlow - Transform Chats into Actionable Insights',
+  title: 'ChatShare - Transform Chats into Actionable Insights',
   description:
     'Copy, paste, and transform your chats. Hide sensitive info, create tasks, summaries, and action plans for your team.',
 };
