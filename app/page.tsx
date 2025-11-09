@@ -26,7 +26,7 @@ export default function Home() {
         {/* Hero + Features Section (First Fold) */}
         <section className='border-b border-dashed border-border relative'>
           {/* Hero */}
-          <div className='px-4 md:px-8 pt-45 pb-31 md:pt-45 md:pb-31 relative overflow-hidden'>
+          <div className='px-4 md:px-8 pt-43 pb-28 md:pt-43 md:pb-28 relative overflow-hidden'>
             {/* Background Images */}
             <Image
               src='/black-bg.webp'
@@ -104,13 +104,14 @@ export default function Home() {
                   'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'
                 )}
               >
-                <span className='text-xl text-primary'>✓</span>
+                <span className='text-xl text-primary'>💬</span>
               </div>
               <h3 className='font-heading text-base md:text-lg font-bold mb-2 text-foreground'>
-                Task Creation
+                Team Collaboration
               </h3>
               <p className='text-xs md:text-sm leading-relaxed text-muted-foreground'>
-                Automatically extract and create todos from your conversations.
+                Collaborate with your team on shared chats. Discuss, comment,
+                and work together in real-time.
               </p>
             </div>
 
@@ -124,13 +125,18 @@ export default function Home() {
                   'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'
                 )}
               >
-                <span className='text-xl text-primary'>📊</span>
+                <span className='text-xl text-primary'>✓</span>
               </div>
-              <h3 className='font-heading text-base md:text-lg font-bold mb-2 text-foreground'>
-                Smart Summaries
-              </h3>
+              <div className='flex items-center gap-2 mb-2'>
+                <h3 className='font-heading text-base md:text-lg font-bold text-foreground'>
+                  Task Creation
+                </h3>
+                <span className='px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded-full'>
+                  Beta
+                </span>
+              </div>
               <p className='text-xs md:text-sm leading-relaxed text-muted-foreground'>
-                Get instant summaries and action plans from lengthy chats.
+                Automatically extract and create todos from your conversations.
               </p>
             </div>
           </div>
