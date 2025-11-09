@@ -540,7 +540,7 @@ export function Sidebar() {
                 Login
               </h2>
               <p className='mb-4 text-xs text-muted-foreground'>
-                Login to save your information related to projects
+                Login to save your information related to chats
               </p>
               <div
                 className={cn(
