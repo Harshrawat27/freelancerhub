@@ -48,7 +48,7 @@ export function CommentInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className='min-h-[80px] resize-none'
+        className='min-h-4 max-h-9 resize-none'
         disabled={isSubmitting}
       />
       <Button

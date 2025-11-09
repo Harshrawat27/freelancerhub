@@ -140,6 +140,7 @@ export function SelectableMessage({
       parts.push(
         <span
           key={`highlight-${idx}`}
+          data-thread-id={highlight.threadId}
           className={cn(
             'highlight-span cursor-pointer transition-opacity',
             highlight.isActive ? 'bg-green-500 text-black' : 'bg-green-500/50'

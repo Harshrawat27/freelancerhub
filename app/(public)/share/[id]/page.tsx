@@ -49,7 +49,9 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-  const [positionTrigger, setPositionTrigger] = useState(0);
+  const [commentPositions, setCommentPositions] = useState<{
+    [key: string]: number;
+  }>({});
   const [pendingSelection, setPendingSelection] = useState<{
     messageId: string;
     text: string;
@@ -58,7 +60,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   } | null>(null);
   const router = useRouter();
   const threadRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Get current user info
@@ -163,6 +165,170 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
       });
   }, [threads, parsedMessages, activeThreadId]);
 
+  // Calculate comment positions based on highlight positions with collision detection
+  const calculateCommentPositions = React.useCallback(() => {
+    if (!messagesContainerRef.current || !commentsContainerRef.current) return;
+
+    const positions: { [key: string]: number } = {};
+    const commentsContainerTop =
+      commentsContainerRef.current.getBoundingClientRect().top;
+    const MIN_GAP = 8;
+
+    // Step 1: Get ideal Y position for each comment from its highlight
+    const idealPositions: { threadId: string; y: number; height: number }[] =
+      [];
+
+    sortedThreads.forEach((thread) => {
+      const highlightSpan = messagesContainerRef.current?.querySelector(
+        `[data-thread-id="${thread.id}"]`
+      ) as HTMLElement;
+      const commentEl = threadRefs.current[thread.id];
+
+      if (highlightSpan && commentEl) {
+        const highlightRect = highlightSpan.getBoundingClientRect();
+        const commentHeight = commentEl.offsetHeight || 200;
+        const idealY = highlightRect.top - commentsContainerTop;
+
+        idealPositions.push({
+          threadId: thread.id,
+          y: idealY,
+          height: commentHeight,
+        });
+      }
+    });
+
+    if (idealPositions.length === 0) return;
+
+    // Step 2: Load saved positions from localStorage
+    const savedPositions = localStorage.getItem(
+      `comment-positions-${chat?.id}`
+    );
+    const parsedSavedPositions: { [key: string]: number } = savedPositions
+      ? JSON.parse(savedPositions)
+      : {};
+
+    // Step 3: Calculate positions
+    if (activeThreadId) {
+      // When a comment is active, align it exactly with its highlight
+      const activeIndex = idealPositions.findIndex(
+        (p) => p.threadId === activeThreadId
+      );
+
+      if (activeIndex !== -1) {
+        const activeItem = idealPositions[activeIndex];
+        positions[activeItem.threadId] = activeItem.y;
+
+        // Position comments BEFORE active comment
+        for (let i = activeIndex - 1; i >= 0; i--) {
+          const currentItem = idealPositions[i];
+          const nextItem = idealPositions[i + 1];
+          const nextY = positions[nextItem.threadId];
+
+          // Try to use ideal position, but avoid collision with next comment
+          let finalY = currentItem.y;
+          const wouldCollide = finalY + currentItem.height + MIN_GAP > nextY;
+
+          if (wouldCollide) {
+            // Stack above the next comment
+            finalY = nextY - currentItem.height - MIN_GAP;
+          }
+
+          positions[currentItem.threadId] = finalY;
+        }
+
+        // Position comments AFTER active comment
+        for (let i = activeIndex + 1; i < idealPositions.length; i++) {
+          const currentItem = idealPositions[i];
+          const prevItem = idealPositions[i - 1];
+          const prevY = positions[prevItem.threadId];
+          const prevBottom = prevY + prevItem.height;
+
+          // Try to use ideal position, but avoid collision with previous comment
+          let finalY = currentItem.y;
+          const wouldCollide = finalY < prevBottom + MIN_GAP;
+
+          if (wouldCollide) {
+            // Stack below the previous comment
+            finalY = prevBottom + MIN_GAP;
+          }
+
+          positions[currentItem.threadId] = finalY;
+        }
+
+        // Save to localStorage
+        localStorage.setItem(
+          `comment-positions-${chat?.id}`,
+          JSON.stringify(positions)
+        );
+      }
+    } else {
+      // No active comment - use saved positions or calculate initial positions
+      const hasSavedPositions =
+        Object.keys(parsedSavedPositions).length > 0 &&
+        idealPositions.some(
+          (item) => parsedSavedPositions[item.threadId] !== undefined
+        );
+
+      if (hasSavedPositions) {
+        // Use saved positions
+        idealPositions.forEach((item) => {
+          positions[item.threadId] =
+            parsedSavedPositions[item.threadId] ?? item.y;
+        });
+      } else {
+        // Initial layout: align first comment, stack others below
+        idealPositions.forEach((item, index) => {
+          if (index === 0) {
+            // First comment aligns with its highlight
+            positions[item.threadId] = item.y;
+          } else {
+            // Other comments stack below without overlap
+            const prevItem = idealPositions[index - 1];
+            const prevY = positions[prevItem.threadId];
+            const prevBottom = prevY + prevItem.height;
+
+            // Try ideal position first
+            let finalY = item.y;
+            const wouldCollide = finalY < prevBottom + MIN_GAP;
+
+            if (wouldCollide) {
+              // Stack below previous comment
+              finalY = prevBottom + MIN_GAP;
+            }
+
+            positions[item.threadId] = finalY;
+          }
+        });
+
+        // Save initial positions
+        localStorage.setItem(
+          `comment-positions-${chat?.id}`,
+          JSON.stringify(positions)
+        );
+      }
+    }
+
+    setCommentPositions(positions);
+  }, [sortedThreads, activeThreadId, threadRefs, chat?.id]);
+
+  // Recalculate positions when threads, active thread, or layout changes
+  React.useEffect(() => {
+    calculateCommentPositions();
+
+    // Also recalculate on scroll and resize
+    const handleRecalculate = () => {
+      requestAnimationFrame(calculateCommentPositions);
+    };
+
+    window.addEventListener('scroll', handleRecalculate, true);
+    window.addEventListener('resize', handleRecalculate);
+
+    return () => {
+      window.removeEventListener('scroll', handleRecalculate, true);
+      window.removeEventListener('resize', handleRecalculate);
+    };
+  }, [calculateCommentPositions]);
+
   // Handle text selection - create thread
   const handleTextSelected = async (
     messageId: string,
@@ -203,23 +369,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   // Handle highlight click - activate thread
   const handleHighlightClick = (threadId: string) => {
     setActiveThreadId(threadId);
-
-    // Force re-render to recalculate positions after DOM updates
-    setTimeout(() => {
-      setPositionTrigger((prev) => prev + 1);
-    }, 100);
   };
-
-  // Recalculate positions when active thread changes
-  useEffect(() => {
-    if (activeThreadId) {
-      // Small delay to ensure DOM is updated
-      const timer = setTimeout(() => {
-        setPositionTrigger((prev) => prev + 1);
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [activeThreadId]);
 
   // Handle adding comment to thread
   const handleAddComment = async (threadId: string, content: string) => {
@@ -425,32 +575,6 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const showCommentsSidebar =
     activeThreadId !== null || threadsWithComments.length > 0;
 
-  // Calculate comment position offset based on active thread
-  const getCommentOffset = (thread: any, index: number) => {
-    if (!activeThreadId) return 0;
-
-    const activeThread = sortedThreads.find((t) => t.id === activeThreadId);
-    if (!activeThread) return 0;
-
-    const messageEl = messageRefs.current[activeThread.messageId];
-    const threadEl = threadRefs.current[activeThreadId];
-    const containerEl = commentsContainerRef.current;
-
-    if (!messageEl || !threadEl || !containerEl) return 0;
-
-    // Calculate where the active comment should be (aligned with its message)
-    const messageTop = messageEl.getBoundingClientRect().top;
-    const containerTop = containerEl.getBoundingClientRect().top;
-    const currentThreadTop = threadEl.getBoundingClientRect().top;
-
-    // Offset needed to align active thread with its message
-    const targetPosition = messageTop - containerTop;
-    const currentPosition = currentThreadTop - containerTop;
-    const offset = targetPosition - currentPosition;
-
-    return offset;
-  };
-
   return (
     <div className='min-h-screen bg-background p-6'>
       <div className='max-w-7xl mx-auto'>
@@ -466,6 +590,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
         <div className='flex flex-row gap-6'>
           {/* Chat Content */}
           <div
+            ref={messagesContainerRef}
             className={cn(
               'bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 transition-all',
               showCommentsSidebar ? 'w-1/2' : 'w-full'
@@ -478,12 +603,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
                 const highlights = getMessageHighlights(msg.id);
 
                 return (
-                  <div
-                    key={msg.id}
-                    ref={(el) => {
-                      messageRefs.current[msg.id] = el;
-                    }}
-                  >
+                  <div key={msg.id}>
                     {/* Message Bubble */}
                     <div
                       className={cn(
@@ -541,26 +661,26 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
           {/* Comments Sidebar - Only show if there's an active thread or threads with comments */}
           {showCommentsSidebar && (
             <div className='w-1/2 overflow-hidden'>
-              <h3 className='text-lg font-semibold mb-4 bg-background relative z-10'>
+              <h3 className='text-lg font-semibold mb-4 bg-background sticky top-0 z-10'>
                 Comments
               </h3>
               <div
                 ref={commentsContainerRef}
-                className='relative'
-                style={{
-                  transform:
-                    activeThreadId && positionTrigger >= 0
-                      ? `translateY(${getCommentOffset(null, 0)}px)`
-                      : 'none',
-                  transition: 'transform 0.3s ease-out',
-                }}
+                className='relative min-h-[500px]'
               >
-                <div className='space-y-4 p-1'>
-                  {sortedThreads.map((thread, index) => (
+                {sortedThreads.map((thread) => {
+                  const position = commentPositions[thread.id] ?? 0;
+
+                  return (
                     <div
                       key={thread.id}
                       ref={(el) => {
                         threadRefs.current[thread.id] = el;
+                      }}
+                      className='absolute left-0 right-0'
+                      style={{
+                        top: `${position}px`,
+                        transition: 'top 0.3s ease-out',
                       }}
                     >
                       <InlineCommentThread
@@ -574,8 +694,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
                         isActive={thread.id === activeThreadId}
                       />
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
           )}
