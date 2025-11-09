@@ -15,7 +15,7 @@ export default function Home() {
           <div className='flex justify-between items-center'>
             <div className='flex flex-row gap-2'>
               <Image src='/logo.svg' height={40} width={40} alt='logo' />
-              <div className='font-heading text-xl md:text-2xl font-bold text-white'>
+              <div className='font-heading text-xl md:text-2xl font-bold text-black dark:text-white'>
                 ChatShare
               </div>
             </div>

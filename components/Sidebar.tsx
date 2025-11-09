@@ -103,7 +103,7 @@ export function Sidebar() {
         <div className='mb-4 pb-3 border-b border-dashed border-border'>
           <div className='flex flex-row gap-2 items-center'>
             <Image src='/logo.svg' height={50} width={50} alt='logo' />
-            <h2 className='font-heading text-xl font-bold text-white'>
+            <h2 className='font-heading text-xl font-bold text-black dark:text-white'>
               ChatShare
             </h2>
           </div>
