@@ -13,6 +13,8 @@ export const auth = betterAuth({
     enabled: true,
   },
 
+  trustedOrigins: ['http://localhost:3000', 'https://chatshare.co'],
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
