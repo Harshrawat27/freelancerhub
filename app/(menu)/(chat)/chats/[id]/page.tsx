@@ -23,7 +23,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { emailSchema } from '@/lib/validations';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
+import { useSession } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -51,6 +53,8 @@ export default function ChatDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
+  const session = useSession();
   const [id, setId] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
   const [rawChat, setRawChat] = useState('');
@@ -72,6 +76,9 @@ export default function ChatDetail({
   const [leftSenders, setLeftSenders] = useState<string[]>([]);
   const [rightSenders, setRightSenders] = useState<string[]>([]);
   const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
+
+  // Check if the current user is the owner
+  const isOwner = chat && session.data?.user?.id === chat.userId;
 
   // Unwrap params
   useEffect(() => {
@@ -561,7 +568,26 @@ export default function ChatDetail({
     <div className='min-h-screen bg-background transition-colors duration-300'>
       <Sidebar />
       <main className='margin-left-right-side p-6 flex flex-col min-h-screen max-h-screen'>
-        <Topbar pageName={chat.title} />
+        <Topbar
+          pageName={chat.title}
+          button={
+            isOwner ? (
+              <button
+                onClick={() => router.push(`/share/${id}`)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
+                  'bg-secondary text-secondary-foreground',
+                  'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
+                  'hover:bg-secondary/80',
+                  'transition-colors duration-200 cursor-pointer'
+                )}
+              >
+                <Eye className='w-4 h-4' />
+                Share Mode
+              </button>
+            ) : null
+          }
+        />
 
         <div className='mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 grow h-[calc(100vh-110px)]'>
           {/* Left Side - Input and Controls */}

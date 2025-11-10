@@ -8,7 +8,7 @@ import { useCommentThreads } from '@/lib/realtime/hooks/useCommentThreads';
 import { SelectableMessage } from '@/components/comments/SelectableMessage';
 import { InlineCommentThread } from '@/components/comments/InlineCommentThread';
 import { Card } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Edit } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { LiveblocksRoomProvider } from '@/lib/realtime/providers/LiveblocksRoomProvider';
 
@@ -26,6 +26,7 @@ interface Chat {
   senderPositions?: { left: string[]; right: string[] } | null;
   isPublic: boolean;
   sharedWith?: Array<{ email: string; permission: string }> | null;
+  userId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -62,6 +63,9 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const threadRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const commentsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Check if the current user is the owner
+  const isOwner = chat && currentUser?.id === chat.userId;
 
   // Get current user info
   useEffect(() => {
@@ -578,7 +582,26 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   return (
     <div className='min-h-screen bg-background p-6'>
       <div className='max-w-7xl mx-auto'>
-        <Topbar pageName={chat?.title || 'Loading...'} />
+        <Topbar
+          pageName={chat?.title || 'Loading...'}
+          button={
+            isOwner ? (
+              <button
+                onClick={() => router.push(`/chats/${chatId}`)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
+                  'bg-secondary text-secondary-foreground',
+                  'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
+                  'hover:bg-secondary/80',
+                  'transition-colors duration-200 cursor-pointer'
+                )}
+              >
+                <Edit className='w-4 h-4' />
+                Edit Mode
+              </button>
+            ) : null
+          }
+        />
 
         {isConnected && (
           <div className='flex items-center gap-2 text-sm text-muted-foreground mb-4 mt-4'>

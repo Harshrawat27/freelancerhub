@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react';
 
 import { ThemeToggle } from '../components/ThemeToggle';
 
-const Topbar = ({ pageName }: { pageName: string }) => {
+const Topbar = ({
+  pageName,
+  button,
+}: {
+  pageName: string;
+  button?: React.ReactNode;
+}) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
 
   // Load sidebar visibility state from localStorage on mount
@@ -64,7 +70,10 @@ const Topbar = ({ pageName }: { pageName: string }) => {
           </motion.h1>
         </div>
       </div>
-      <ThemeToggle />
+      <div className='flex items-center gap-3'>
+        {button}
+        <ThemeToggle />
+      </div>
     </div>
   );
 };
