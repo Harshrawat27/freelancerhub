@@ -2,15 +2,19 @@
 
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { MessageAssetUpload } from '@/components/MessageAssetUpload';
-import { Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 interface Message {
   id: string;
@@ -34,62 +38,6 @@ export default function CreateChats() {
   const [leftSenders, setLeftSenders] = useState<string[]>([]);
   const [rightSenders, setRightSenders] = useState<string[]>([]);
   const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
-  const [messageAssets, setMessageAssets] = useState<Record<string, File[]>>(
-    {}
-  );
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-
-  // Load message assets from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('messageAssets');
-    if (stored) {
-      try {
-        // We can't store File objects directly, so we'll need to handle this differently
-        // For now, just load the structure
-        const parsed = JSON.parse(stored);
-        // Note: Files will need to be re-uploaded; localStorage can't persist File objects
-      } catch (error) {
-        console.error('Failed to load message assets:', error);
-      }
-    }
-  }, []);
-
-  // Save message assets to localStorage whenever they change
-  useEffect(() => {
-    // Note: File objects can't be serialized, so we store metadata only
-    const metadata: Record<
-      string,
-      Array<{ name: string; size: number; type: string }>
-    > = {};
-    Object.keys(messageAssets).forEach((msgId) => {
-      metadata[msgId] = messageAssets[msgId].map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }));
-    });
-    localStorage.setItem('messageAssets', JSON.stringify(metadata));
-  }, [messageAssets]);
-
-  const handleOpenUpload = (messageId: string) => {
-    setCurrentMessageId(messageId);
-    setUploadDialogOpen(true);
-  };
-
-  const handleFilesAdded = (messageId: string, files: File[]) => {
-    setMessageAssets((prev) => ({
-      ...prev,
-      [messageId]: files,
-    }));
-  };
-
-  const handleRemoveFile = (messageId: string, fileName: string) => {
-    setMessageAssets((prev) => ({
-      ...prev,
-      [messageId]: prev[messageId]?.filter((f) => f.name !== fileName) || [],
-    }));
-  };
 
   const saveChat = async () => {
     if (!rawChat.trim() || parsedMessages.length === 0) {
@@ -126,33 +74,6 @@ export default function CreateChats() {
       }
 
       const savedChat = await response.json();
-
-      // Upload assets to Cloudflare if any exist
-      const assetUploadPromises = [];
-      for (const [messageId, files] of Object.entries(messageAssets)) {
-        if (files.length > 0) {
-          const formData = new FormData();
-          formData.append('chatId', savedChat.id);
-          formData.append('messageId', messageId);
-          files.forEach((file) => {
-            formData.append('files', file);
-          });
-
-          assetUploadPromises.push(
-            fetch('/api/assets', {
-              method: 'POST',
-              body: formData,
-            })
-          );
-        }
-      }
-
-      if (assetUploadPromises.length > 0) {
-        await Promise.all(assetUploadPromises);
-      }
-
-      // Clear localStorage
-      localStorage.removeItem('messageAssets');
 
       toast.success('Chat saved successfully!');
 
@@ -340,8 +261,6 @@ export default function CreateChats() {
     setLeftSenders([]);
     setRightSenders([]);
     setNameMapping({});
-    setMessageAssets({});
-    localStorage.removeItem('messageAssets');
     toast.success('Chat cleared');
   };
 
@@ -831,62 +750,30 @@ export default function CreateChats() {
                             </p>
                           </div>
 
-                          {/* File attachments */}
-                          {messageAssets[msg.id] &&
-                            messageAssets[msg.id].length > 0 && (
-                              <div className='mt-2 space-y-2'>
-                                {messageAssets[msg.id].map((file) => (
-                                  <div
-                                    key={file.name}
-                                    className={cn(
-                                      'flex items-center gap-2 p-2 rounded text-xs',
-                                      isLeft
-                                        ? 'bg-muted'
-                                        : 'bg-primary-foreground/20'
-                                    )}
-                                  >
-                                    {file.type.startsWith('image/') ? (
-                                      <ImageIcon className='w-4 h-4 shrink-0' />
-                                    ) : (
-                                      <FileText className='w-4 h-4 shrink-0' />
-                                    )}
-                                    <span className='flex-1 truncate'>
-                                      {file.name}
-                                    </span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRemoveFile(msg.id, file.name);
-                                      }}
-                                      className='hover:bg-destructive/20 rounded p-1'
-                                    >
-                                      <X className='w-3 h-3' />
-                                    </button>
-                                  </div>
-                                ))}
+                          {/* Disabled upload button with tooltip */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className='mt-2'>
+                                <Button
+                                  disabled
+                                  variant='ghost'
+                                  size='sm'
+                                  className={cn(
+                                    'w-full text-xs cursor-not-allowed opacity-50',
+                                    isLeft
+                                      ? 'hover:bg-muted'
+                                      : 'hover:bg-primary-foreground/20'
+                                  )}
+                                >
+                                  <Paperclip className='w-3 h-3 mr-1' />
+                                  Attach Files
+                                </Button>
                               </div>
-                            )}
-
-                          {/* Upload button */}
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenUpload(msg.id);
-                            }}
-                            variant='ghost'
-                            size='sm'
-                            className={cn(
-                              'mt-2 w-full text-xs',
-                              isLeft
-                                ? 'hover:bg-muted'
-                                : 'hover:bg-primary-foreground/20'
-                            )}
-                          >
-                            <Paperclip className='w-3 h-3 mr-1' />
-                            {messageAssets[msg.id]?.length > 0
-                              ? 'Manage Files'
-                              : 'Attach Files'}
-                          </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Create chat first then you will be able to upload assets</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     );

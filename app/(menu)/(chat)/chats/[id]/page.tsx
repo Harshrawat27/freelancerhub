@@ -23,7 +23,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { emailSchema } from '@/lib/validations';
-import { ChevronDown, Eye, FileText, Image as ImageIcon, X, Download, Paperclip } from 'lucide-react';
+import {
+  ChevronDown,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  X,
+  Download,
+  Paperclip,
+  Link,
+  ExternalLink,
+} from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import { MessageAssetUpload } from '@/components/MessageAssetUpload';
@@ -94,7 +104,26 @@ export default function ChatDetail({
   >([]);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const [pendingAssets, setPendingAssets] = useState<Record<string, File[]>>({});
+  const [pendingAssets, setPendingAssets] = useState<Record<string, File[]>>(
+    {}
+  );
+  const [previousMessages, setPreviousMessages] = useState<Message[]>([]);
+
+  // Hash function to create stable message IDs
+  const createStableMessageId = (
+    timestamp: string,
+    sender: string,
+    message: string
+  ): string => {
+    const content = `${timestamp}|${sender}|${message}`;
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36);
+  };
 
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
@@ -365,6 +394,46 @@ export default function ChatDetail({
     }
   };
 
+  // const downloadAsset = async (assetId: string, fileName: string) => {
+  //   try {
+  //     const response = await fetch(`/api/assets/${assetId}/download`);
+  //     if (!response.ok) throw new Error('Failed to fetch file');
+
+  //     const blob = await response.blob();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement('a');
+  //     link.href = url;
+  //     link.download = fileName;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //   } catch (error) {
+  //     console.error('Error downloading file:', error);
+  //     toast.error('Failed to download file');
+  //   }
+  // };
+
+  const downloadAsset = async (fileUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Failed to fetch file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('Failed to download file');
+    }
+  };
+
   const removePendingFile = (messageId: string, fileName: string) => {
     setPendingAssets((prev) => ({
       ...prev,
@@ -395,11 +464,14 @@ export default function ChatDetail({
     let match;
 
     while ((match = whatsappRegex.exec(text)) !== null) {
+      const timestamp = match[1].trim();
+      const sender = match[2].trim();
+      const message = match[3].trim();
       messages.push({
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: match[1].trim(),
-        sender: match[2].trim(),
-        message: match[3].trim(),
+        id: createStableMessageId(timestamp, sender, message),
+        timestamp,
+        sender,
+        message,
         isRedacted: false,
         originalIndex: match.index,
         originalLength: match[0].length,
@@ -412,11 +484,14 @@ export default function ChatDetail({
         /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
 
       while ((match = telegramRegex.exec(text)) !== null) {
+        const sender = match[1].trim();
+        const timestamp = match[2].trim();
+        const message = match[3].trim();
         messages.push({
-          id: Math.random().toString(36).substr(2, 9),
-          sender: match[1].trim(),
-          timestamp: match[2].trim(),
-          message: match[3].trim(),
+          id: createStableMessageId(timestamp, sender, message),
+          sender,
+          timestamp,
+          message,
           isRedacted: false,
           originalIndex: match.index,
           originalLength: match[0].length,
@@ -458,7 +533,7 @@ export default function ChatDetail({
             sender !== 'Replied'
           ) {
             messages.push({
-              id: Math.random().toString(36).substr(2, 9),
+              id: createStableMessageId(timestamp, sender, message),
               sender,
               timestamp,
               message,
@@ -552,6 +627,12 @@ export default function ChatDetail({
       setIsUpdating(true);
 
       try {
+        // Upload pending assets first
+        await uploadPendingAssets();
+
+        // Store current messages before re-parsing
+        const oldMessages = [...parsedMessages];
+
         const response = await fetch(`/api/chat/${id}`, {
           method: 'PUT',
           headers: {
@@ -574,7 +655,57 @@ export default function ChatDetail({
 
         const updatedChat = await response.json();
         setChat(updatedChat);
+
+        // Re-parse to get new message IDs
         parseChat(rawChat, { left: leftSenders, right: rightSenders });
+
+        // Compare old and new messages to find changed IDs
+        const updates: Array<{ oldMessageId: string; newMessageId: string }> =
+          [];
+        const newMessages = parsedMessages;
+
+        for (
+          let i = 0;
+          i < Math.min(oldMessages.length, newMessages.length);
+          i++
+        ) {
+          if (
+            oldMessages[i] &&
+            newMessages[i] &&
+            oldMessages[i].id !== newMessages[i].id
+          ) {
+            updates.push({
+              oldMessageId: oldMessages[i].id,
+              newMessageId: newMessages[i].id,
+            });
+          }
+        }
+
+        // Update asset messageIds if any changed
+        if (updates.length > 0) {
+          const updateResponse = await fetch('/api/assets/update-message-ids', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chatId: id,
+              updates,
+            }),
+          });
+
+          if (!updateResponse.ok) {
+            console.error('Failed to update asset messageIds');
+          }
+
+          // Refresh assets to get updated data
+          const assetsResponse = await fetch(`/api/assets?chatId=${id}`);
+          if (assetsResponse.ok) {
+            const data = await assetsResponse.json();
+            setAssets(data.assets || []);
+          }
+        }
+
         toast.success('Chat updated successfully!');
       } catch (error) {
         console.error('Error updating chat:', error);
@@ -585,7 +716,8 @@ export default function ChatDetail({
         setIsUpdating(false);
       }
     } else {
-      // Entering edit mode
+      // Entering edit mode - save current messages
+      setPreviousMessages([...parsedMessages]);
       setEditMode(true);
     }
   };
@@ -1396,9 +1528,17 @@ export default function ChatDetail({
                             </p>
 
                             {/* Display assets */}
-                            {(assets.filter((asset) => asset.messageId === msg.id).length > 0 ||
-                              (pendingAssets[msg.id] && pendingAssets[msg.id].length > 0)) && (
-                              <div className={cn('mt-3 space-y-2', !editMode && 'opacity-50')}>
+                            {(assets.filter(
+                              (asset) => asset.messageId === msg.id
+                            ).length > 0 ||
+                              (pendingAssets[msg.id] &&
+                                pendingAssets[msg.id].length > 0)) && (
+                              <div
+                                className={cn(
+                                  'mt-3 space-y-2',
+                                  !editMode && 'opacity-50'
+                                )}
+                              >
                                 {/* Existing assets */}
                                 {assets
                                   .filter((asset) => asset.messageId === msg.id)
@@ -1424,19 +1564,25 @@ export default function ChatDetail({
                                               {asset.fileName}
                                             </p>
                                             <p className='text-xs opacity-70'>
-                                              {(asset.fileSize / 1024).toFixed(1)} KB
+                                              {(asset.fileSize / 1024).toFixed(
+                                                1
+                                              )}{' '}
+                                              KB
                                             </p>
                                           </div>
                                         </div>
                                       ) : (
                                         <>
-                                          <FileText className='w-4 h-4 flex-shrink-0' />
+                                          <FileText className='w-4 h-4 shrink-0' />
                                           <div className='flex-1 min-w-0'>
                                             <p className='truncate font-medium'>
                                               {asset.fileName}
                                             </p>
                                             <p className='text-xs opacity-70'>
-                                              {(asset.fileSize / 1024).toFixed(1)} KB
+                                              {(asset.fileSize / 1024).toFixed(
+                                                1
+                                              )}{' '}
+                                              KB
                                             </p>
                                           </div>
                                         </>
@@ -1446,12 +1592,27 @@ export default function ChatDetail({
                                           href={asset.fileUrl}
                                           target='_blank'
                                           rel='noopener noreferrer'
-                                          download
                                           className='hover:bg-background/20 rounded p-1'
                                           onClick={(e) => e.stopPropagation()}
                                         >
-                                          <Download className='w-3 h-3' />
+                                          <ExternalLink className='w-3 h-3' />
                                         </a>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // downloadAsset(
+                                            //   asset.id,
+                                            //   asset.fileName
+                                            // );
+                                            downloadAsset(
+                                              asset.fileUrl,
+                                              asset.fileName
+                                            );
+                                          }}
+                                          className='hover:bg-background/20 rounded p-1 cursor-pointer'
+                                        >
+                                          <Download className='w-3 h-3' />
+                                        </button>
                                         {isOwner && editMode && (
                                           <button
                                             onClick={(e) => {
@@ -1468,42 +1629,49 @@ export default function ChatDetail({
                                   ))}
 
                                 {/* Pending assets (not yet uploaded) */}
-                                {pendingAssets[msg.id] && pendingAssets[msg.id].length > 0 && (
-                                  <>
-                                    {pendingAssets[msg.id].map((file) => (
-                                      <div
-                                        key={file.name}
-                                        className={cn(
-                                          'flex items-center gap-2 p-2 rounded text-xs border border-dashed',
-                                          isLeft
-                                            ? 'bg-muted border-muted-foreground/30'
-                                            : 'bg-primary-foreground/20 border-primary-foreground/30'
-                                        )}
-                                      >
-                                        {file.type.startsWith('image/') ? (
-                                          <ImageIcon className='w-4 h-4 flex-shrink-0' />
-                                        ) : (
-                                          <FileText className='w-4 h-4 flex-shrink-0' />
-                                        )}
-                                        <div className='flex-1 min-w-0'>
-                                          <p className='truncate font-medium'>{file.name}</p>
-                                          <p className='text-xs opacity-70'>
-                                            {(file.size / 1024).toFixed(1)} KB (Pending)
-                                          </p>
-                                        </div>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            removePendingFile(msg.id, file.name);
-                                          }}
-                                          className='hover:bg-destructive/20 rounded p-1'
+                                {pendingAssets[msg.id] &&
+                                  pendingAssets[msg.id].length > 0 && (
+                                    <>
+                                      {pendingAssets[msg.id].map((file) => (
+                                        <div
+                                          key={file.name}
+                                          className={cn(
+                                            'flex items-center gap-2 p-2 rounded text-xs border border-dashed',
+                                            isLeft
+                                              ? 'bg-muted border-muted-foreground/30'
+                                              : 'bg-primary-foreground/20 border-primary-foreground/30'
+                                          )}
                                         >
-                                          <X className='w-3 h-3' />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </>
-                                )}
+                                          {file.type.startsWith('image/') ? (
+                                            <ImageIcon className='w-4 h-4 flex-shrink-0' />
+                                          ) : (
+                                            <FileText className='w-4 h-4 flex-shrink-0' />
+                                          )}
+                                          <div className='flex-1 min-w-0'>
+                                            <p className='truncate font-medium'>
+                                              {file.name}
+                                            </p>
+                                            <p className='text-xs opacity-70'>
+                                              {(file.size / 1024).toFixed(1)} KB
+                                              (Pending)
+                                            </p>
+                                          </div>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              removePendingFile(
+                                                msg.id,
+                                                file.name
+                                              );
+                                            }}
+                                            className='hover:bg-destructive/20 rounded p-1'
+                                          >
+                                            <X className='w-3 h-3' />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </>
+                                  )}
                               </div>
                             )}
 
@@ -1525,12 +1693,16 @@ export default function ChatDetail({
                                         isLeft
                                           ? 'hover:bg-muted'
                                           : 'hover:bg-primary-foreground/20',
-                                        !editMode && 'opacity-50 cursor-not-allowed'
+                                        !editMode &&
+                                          'opacity-50 cursor-not-allowed'
                                       )}
                                     >
                                       <Paperclip className='w-3 h-3 mr-1' />
-                                      {assets.filter((a) => a.messageId === msg.id).length > 0 ||
-                                      (pendingAssets[msg.id] && pendingAssets[msg.id].length > 0)
+                                      {assets.filter(
+                                        (a) => a.messageId === msg.id
+                                      ).length > 0 ||
+                                      (pendingAssets[msg.id] &&
+                                        pendingAssets[msg.id].length > 0)
                                         ? 'Manage Files'
                                         : 'Attach Files'}
                                     </Button>
@@ -1553,6 +1725,17 @@ export default function ChatDetail({
             </div>
           </div>
         </div>
+
+        {/* Asset Upload Dialog */}
+        {currentMessageId && (
+          <MessageAssetUpload
+            messageId={currentMessageId}
+            open={uploadDialogOpen}
+            onOpenChange={setUploadDialogOpen}
+            onFilesAdded={handleFilesAdded}
+            existingFiles={pendingAssets[currentMessageId] || []}
+          />
+        )}
       </main>
     </div>
   );

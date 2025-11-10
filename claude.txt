@@ -24,4 +24,5 @@ todo left to launch it:
 
 - while adding comment sequence is not correct! i think we are treating one message not text, we have to fix it. 
 
-- owner should have choice to hide date and time!
+- owner should have choice to hide date and time! >> later 
+- same assets download UI in /share page
