@@ -33,6 +33,8 @@ import {
   Paperclip,
   Link,
   ExternalLink,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
@@ -108,6 +110,7 @@ export default function ChatDetail({
     {}
   );
   const [previousMessages, setPreviousMessages] = useState<Message[]>([]);
+  const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
 
   // Hash function to create stable message IDs
   const createStableMessageId = (
@@ -376,6 +379,7 @@ export default function ChatDetail({
   const deleteAsset = async (assetId: string) => {
     if (!editMode) return;
 
+    setDeletingAssetId(assetId);
     try {
       const response = await fetch(`/api/assets/${assetId}`, {
         method: 'DELETE',
@@ -391,6 +395,8 @@ export default function ChatDetail({
     } catch (error) {
       console.error('Error deleting asset:', error);
       toast.error('Failed to delete file');
+    } finally {
+      setDeletingAssetId(null);
     }
   };
 
@@ -1619,9 +1625,14 @@ export default function ChatDetail({
                                               e.stopPropagation();
                                               deleteAsset(asset.id);
                                             }}
-                                            className='hover:bg-destructive/20 rounded p-1 opacity-0 group-hover/asset:opacity-100 transition-opacity'
+                                            disabled={deletingAssetId === asset.id}
+                                            className='hover:bg-destructive/20 rounded p-1 cursor-pointer transition-colors disabled:cursor-not-allowed'
                                           >
-                                            <X className='w-3 h-3' />
+                                            {deletingAssetId === asset.id ? (
+                                              <Loader2 className='w-3 h-3 animate-spin' />
+                                            ) : (
+                                              <Trash2 className='w-3 h-3' />
+                                            )}
                                           </button>
                                         )}
                                       </div>

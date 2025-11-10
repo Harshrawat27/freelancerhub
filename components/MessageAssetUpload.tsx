@@ -38,6 +38,13 @@ export function MessageAssetUpload({
 }: MessageAssetUploadProps) {
   const [files, setFiles] = React.useState<File[]>(existingFiles);
 
+  // Sync files with existingFiles when dialog opens or messageId changes
+  React.useEffect(() => {
+    if (open) {
+      setFiles(existingFiles);
+    }
+  }, [open, messageId, existingFiles]);
+
   const onFileValidate = React.useCallback(
     (file: File): string | null => {
       // Calculate total size including existing files
@@ -63,6 +70,8 @@ export function MessageAssetUpload({
 
   const handleSave = () => {
     onFilesAdded(messageId, files);
+    // Clear the dialog's file state after saving
+    setFiles([]);
     onOpenChange(false);
   };
 
@@ -82,7 +91,7 @@ export function MessageAssetUpload({
           onFileValidate={onFileValidate}
           onFileReject={onFileReject}
           maxSize={100 * 1024 * 1024} // 100MB individual file limit
-          className='w-full'
+          className='w-full max-w-full'
           multiple
         >
           <FileUploadDropzone>
@@ -96,13 +105,13 @@ export function MessageAssetUpload({
               </p>
             </div>
           </FileUploadDropzone>
-          <FileUploadList>
+          <FileUploadList className='max-w-full overflow-hidden'>
             {files.map((file) => (
-              <FileUploadItem key={file.name} value={file}>
-                <FileUploadItemPreview />
-                <FileUploadItemMetadata />
+              <FileUploadItem key={file.name} value={file} className='max-w-full'>
+                <FileUploadItemPreview className='shrink-0' />
+                <FileUploadItemMetadata className='min-w-0 flex-1' />
                 <FileUploadItemDelete asChild>
-                  <Button variant='ghost' size='icon' className='size-7'>
+                  <Button variant='ghost' size='icon' className='size-7 shrink-0'>
                     <X />
                   </Button>
                 </FileUploadItemDelete>
