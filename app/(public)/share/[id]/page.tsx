@@ -8,9 +8,16 @@ import { useCommentThreads } from '@/lib/realtime/hooks/useCommentThreads';
 import { SelectableMessage } from '@/components/comments/SelectableMessage';
 import { InlineCommentThread } from '@/components/comments/InlineCommentThread';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, Edit } from 'lucide-react';
+import {
+  AlertCircle,
+  Edit,
+  FileText,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { LiveblocksRoomProvider } from '@/lib/realtime/providers/LiveblocksRoomProvider';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -31,16 +38,32 @@ interface Chat {
   updatedAt: string;
 }
 
-// Simple hash function to generate deterministic IDs from content
-function hashString(str: string): string {
+interface Asset {
+  id: string;
+  chatId: string;
+  messageId: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+// Hash function to create stable message IDs (must match /chats/[id] implementation)
+const createStableMessageId = (
+  timestamp: string,
+  sender: string,
+  message: string
+): string => {
+  const content = `${timestamp}|${sender}|${message}`;
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash).toString(36);
-}
+};
 
 // Inner component that uses Liveblocks hooks
 function SharedChatPageContent({ chatId }: { chatId: string }) {
@@ -59,6 +82,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     startOffset: number;
     endOffset: number;
   } | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const router = useRouter();
   const threadRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -132,6 +156,58 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
 
     fetchSharedChat();
   }, [chatId]);
+
+  // Fetch assets for the chat
+  useEffect(() => {
+    const fetchAssets = async () => {
+      if (!chatId) return;
+
+      try {
+        const response = await fetch(`/api/assets?chatId=${chatId}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched assets:', data.assets);
+          setAssets(data.assets || []);
+        }
+      } catch (error) {
+        console.error('Error fetching assets:', error);
+      }
+    };
+
+    fetchAssets();
+  }, [chatId]);
+
+  // Debug: Log message IDs and asset message IDs
+  useEffect(() => {
+    if (parsedMessages.length > 0 && assets.length > 0) {
+      console.log('Parsed Message IDs:', parsedMessages.map(m => m.id));
+      console.log('Asset Message IDs:', assets.map(a => a.messageId));
+      console.log('Messages with assets:', parsedMessages.filter(msg =>
+        assets.some(asset => asset.messageId === msg.id)
+      ).map(m => ({ id: m.id, sender: m.sender })));
+    }
+  }, [parsedMessages, assets]);
+
+  // Download asset function
+  const downloadAsset = async (fileUrl: string, fileName: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Failed to fetch file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('Failed to download file');
+    }
+  };
 
   // Initialize comment threads hook
   const {
@@ -409,12 +485,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
       const sender = match[2].trim();
       const message = match[3].trim();
 
-      // Generate deterministic ID based on content
-      const contentForHash = `${timestamp}-${sender}-${message}`;
-      const deterministicId = hashString(contentForHash);
-
       messages.push({
-        id: deterministicId,
+        id: createStableMessageId(timestamp, sender, message),
         timestamp,
         sender,
         message,
@@ -431,12 +503,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
         const timestamp = match[2].trim();
         const message = match[3].trim();
 
-        // Generate deterministic ID based on content
-        const contentForHash = `${timestamp}-${sender}-${message}`;
-        const deterministicId = hashString(contentForHash);
-
         messages.push({
-          id: deterministicId,
+          id: createStableMessageId(timestamp, sender, message),
           sender,
           timestamp,
           message,
@@ -664,6 +732,79 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
                           >
                             {msg.timestamp}
                           </p>
+
+                          {/* Display assets */}
+                          {assets.filter((asset) => asset.messageId === msg.id)
+                            .length > 0 && (
+                            <div className='mt-3 space-y-2'>
+                              {assets
+                                .filter((asset) => asset.messageId === msg.id)
+                                .map((asset) => (
+                                  <div
+                                    key={asset.id}
+                                    className={cn(
+                                      'flex items-center gap-2 p-2 rounded text-xs group/asset',
+                                      isLeft
+                                        ? 'bg-muted'
+                                        : 'bg-primary-foreground/20'
+                                    )}
+                                  >
+                                    {asset.fileType.startsWith('image/') ? (
+                                      <div className='flex flex-col items-start gap-2 flex-1 min-w-0'>
+                                        <img
+                                          src={asset.fileUrl}
+                                          alt={asset.fileName}
+                                          className='max-w-[200px] max-h-[200px] rounded object-cover'
+                                        />
+                                        <div className='flex-1 min-w-0 overflow-hidden'>
+                                          <p className='truncate font-medium'>
+                                            {asset.fileName}
+                                          </p>
+                                          <p className='text-xs opacity-70'>
+                                            {(asset.fileSize / 1024).toFixed(1)}{' '}
+                                            KB
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <FileText className='w-4 h-4 shrink-0' />
+                                        <div className='flex-1 min-w-0 overflow-hidden'>
+                                          <p className='truncate font-medium'>
+                                            {asset.fileName}
+                                          </p>
+                                          <p className='text-xs opacity-70'>
+                                            {(asset.fileSize / 1024).toFixed(1)}{' '}
+                                            KB
+                                          </p>
+                                        </div>
+                                      </>
+                                    )}
+                                    <div className='flex gap-1 shrink-0'>
+                                      <a
+                                        href={asset.fileUrl}
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                        className='hover:bg-background/20 rounded p-1'
+                                      >
+                                        <ExternalLink className='w-3 h-3' />
+                                      </a>
+                                      <button
+                                        onClick={() =>
+                                          downloadAsset(
+                                            asset.fileUrl,
+                                            asset.fileName
+                                          )
+                                        }
+                                        className='hover:bg-background/20 rounded p-1 cursor-pointer'
+                                      >
+                                        <Download className='w-3 h-3' />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
