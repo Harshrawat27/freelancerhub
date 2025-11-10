@@ -58,7 +58,10 @@ export default function CreateChats() {
   // Save message assets to localStorage whenever they change
   useEffect(() => {
     // Note: File objects can't be serialized, so we store metadata only
-    const metadata: Record<string, Array<{ name: string; size: number; type: string }>> = {};
+    const metadata: Record<
+      string,
+      Array<{ name: string; size: number; type: string }>
+    > = {};
     Object.keys(messageAssets).forEach((msgId) => {
       metadata[msgId] = messageAssets[msgId].map((file) => ({
         name: file.name,
@@ -843,9 +846,9 @@ export default function CreateChats() {
                                     )}
                                   >
                                     {file.type.startsWith('image/') ? (
-                                      <ImageIcon className='w-4 h-4 flex-shrink-0' />
+                                      <ImageIcon className='w-4 h-4 shrink-0' />
                                     ) : (
-                                      <FileText className='w-4 h-4 flex-shrink-0' />
+                                      <FileText className='w-4 h-4 shrink-0' />
                                     )}
                                     <span className='flex-1 truncate'>
                                       {file.name}

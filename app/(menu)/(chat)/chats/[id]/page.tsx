@@ -23,9 +23,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { emailSchema } from '@/lib/validations';
-import { ChevronDown, Eye, FileText, Image as ImageIcon, X, Download } from 'lucide-react';
+import { ChevronDown, Eye, FileText, Image as ImageIcon, X, Download, Paperclip } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
+import { MessageAssetUpload } from '@/components/MessageAssetUpload';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface Message {
   id: string;
@@ -86,6 +92,9 @@ export default function ChatDetail({
       fileSize: number;
     }>
   >([]);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [pendingAssets, setPendingAssets] = useState<Record<string, File[]>>({});
 
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
@@ -279,7 +288,65 @@ export default function ChatDetail({
     }
   };
 
+  const handleOpenUpload = (messageId: string) => {
+    if (!editMode) return;
+    setCurrentMessageId(messageId);
+    setUploadDialogOpen(true);
+  };
+
+  const handleFilesAdded = (messageId: string, files: File[]) => {
+    setPendingAssets((prev) => ({
+      ...prev,
+      [messageId]: files,
+    }));
+  };
+
+  const uploadPendingAssets = async () => {
+    if (!id || Object.keys(pendingAssets).length === 0) return;
+
+    try {
+      const uploadPromises = [];
+
+      for (const [messageId, files] of Object.entries(pendingAssets)) {
+        if (files.length > 0) {
+          const formData = new FormData();
+          formData.append('chatId', id);
+          formData.append('messageId', messageId);
+          files.forEach((file) => {
+            formData.append('files', file);
+          });
+
+          uploadPromises.push(
+            fetch('/api/assets', {
+              method: 'POST',
+              body: formData,
+            })
+          );
+        }
+      }
+
+      if (uploadPromises.length > 0) {
+        const results = await Promise.all(uploadPromises);
+
+        // Fetch updated assets
+        const response = await fetch(`/api/assets?chatId=${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAssets(data.assets || []);
+        }
+
+        setPendingAssets({});
+        toast.success('Assets uploaded successfully');
+      }
+    } catch (error) {
+      console.error('Error uploading assets:', error);
+      toast.error('Failed to upload assets');
+    }
+  };
+
   const deleteAsset = async (assetId: string) => {
+    if (!editMode) return;
+
     try {
       const response = await fetch(`/api/assets/${assetId}`, {
         method: 'DELETE',
@@ -296,6 +363,13 @@ export default function ChatDetail({
       console.error('Error deleting asset:', error);
       toast.error('Failed to delete file');
     }
+  };
+
+  const removePendingFile = (messageId: string, fileName: string) => {
+    setPendingAssets((prev) => ({
+      ...prev,
+      [messageId]: prev[messageId]?.filter((f) => f.name !== fileName) || [],
+    }));
   };
 
   const copyShareableLink = () => {
@@ -1322,9 +1396,10 @@ export default function ChatDetail({
                             </p>
 
                             {/* Display assets */}
-                            {assets.filter((asset) => asset.messageId === msg.id)
-                              .length > 0 && (
-                              <div className='mt-3 space-y-2'>
+                            {(assets.filter((asset) => asset.messageId === msg.id).length > 0 ||
+                              (pendingAssets[msg.id] && pendingAssets[msg.id].length > 0)) && (
+                              <div className={cn('mt-3 space-y-2', !editMode && 'opacity-50')}>
+                                {/* Existing assets */}
                                 {assets
                                   .filter((asset) => asset.messageId === msg.id)
                                   .map((asset) => (
@@ -1377,7 +1452,7 @@ export default function ChatDetail({
                                         >
                                           <Download className='w-3 h-3' />
                                         </a>
-                                        {isOwner && (
+                                        {isOwner && editMode && (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1391,7 +1466,82 @@ export default function ChatDetail({
                                       </div>
                                     </div>
                                   ))}
+
+                                {/* Pending assets (not yet uploaded) */}
+                                {pendingAssets[msg.id] && pendingAssets[msg.id].length > 0 && (
+                                  <>
+                                    {pendingAssets[msg.id].map((file) => (
+                                      <div
+                                        key={file.name}
+                                        className={cn(
+                                          'flex items-center gap-2 p-2 rounded text-xs border border-dashed',
+                                          isLeft
+                                            ? 'bg-muted border-muted-foreground/30'
+                                            : 'bg-primary-foreground/20 border-primary-foreground/30'
+                                        )}
+                                      >
+                                        {file.type.startsWith('image/') ? (
+                                          <ImageIcon className='w-4 h-4 flex-shrink-0' />
+                                        ) : (
+                                          <FileText className='w-4 h-4 flex-shrink-0' />
+                                        )}
+                                        <div className='flex-1 min-w-0'>
+                                          <p className='truncate font-medium'>{file.name}</p>
+                                          <p className='text-xs opacity-70'>
+                                            {(file.size / 1024).toFixed(1)} KB (Pending)
+                                          </p>
+                                        </div>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            removePendingFile(msg.id, file.name);
+                                          }}
+                                          className='hover:bg-destructive/20 rounded p-1'
+                                        >
+                                          <X className='w-3 h-3' />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
                               </div>
+                            )}
+
+                            {/* Upload button */}
+                            {isOwner && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div>
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenUpload(msg.id);
+                                      }}
+                                      variant='ghost'
+                                      size='sm'
+                                      disabled={!editMode}
+                                      className={cn(
+                                        'mt-2 w-full text-xs',
+                                        isLeft
+                                          ? 'hover:bg-muted'
+                                          : 'hover:bg-primary-foreground/20',
+                                        !editMode && 'opacity-50 cursor-not-allowed'
+                                      )}
+                                    >
+                                      <Paperclip className='w-3 h-3 mr-1' />
+                                      {assets.filter((a) => a.messageId === msg.id).length > 0 ||
+                                      (pendingAssets[msg.id] && pendingAssets[msg.id].length > 0)
+                                        ? 'Manage Files'
+                                        : 'Attach Files'}
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                {!editMode && (
+                                  <TooltipContent>
+                                    <p>Click Edit button to change</p>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
                             )}
                           </div>
                         </div>
