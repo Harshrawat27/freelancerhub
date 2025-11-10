@@ -26,3 +26,5 @@ todo left to launch it:
 
 - owner should have choice to hide date and time! >> later 
 - same assets download UI in /share page
+- assets management page create
+- in chat list we have to add pdf what someone shared with us and give it a tag
