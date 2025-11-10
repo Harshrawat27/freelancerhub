@@ -7,7 +7,7 @@ import { deleteFromR2 } from '@/lib/r2-upload';
 // DELETE - Delete an asset
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const incomingHeaders = await headers();
@@ -19,7 +19,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const assetId = params.id;
+    const { id: assetId } = await params;
 
     // Find the asset and verify ownership
     const asset = await prisma.asset.findUnique({
