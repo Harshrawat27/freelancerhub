@@ -28,3 +28,4 @@ todo left to launch it:
 - same assets download UI in /share page
 - assets management page create
 - in chat list we have to add pdf what someone shared with us and give it a tag
+- encrypt chats before saving!
