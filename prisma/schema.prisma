@@ -123,8 +123,24 @@ model Chat {
   updatedAt       DateTime        @updatedAt
   commentThreads  CommentThread[]
   comments        Comment[]
+  assets          Asset[]
 
   @@map("chat")
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  chatId      String
+  chat        Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  messageId   String
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("asset")
 }
 
 model CommentThread {

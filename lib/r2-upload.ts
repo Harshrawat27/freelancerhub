@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Configure R2 client
 const r2Client = new S3Client({
@@ -33,5 +33,24 @@ export async function uploadToR2(
   } catch (error) {
     console.error('R2 upload error:', error);
     throw new Error('Failed to upload file to R2');
+  }
+}
+
+export async function deleteFromR2(fileUrl: string): Promise<void> {
+  try {
+    // Extract the key from the fileUrl
+    // Format: https://pub-xxx.r2.dev/folder/filename
+    const url = new URL(fileUrl);
+    const key = url.pathname.substring(1); // Remove leading slash
+
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME!,
+      Key: key,
+    });
+
+    await r2Client.send(command);
+  } catch (error) {
+    console.error('R2 delete error:', error);
+    throw new Error('Failed to delete file from R2');
   }
 }

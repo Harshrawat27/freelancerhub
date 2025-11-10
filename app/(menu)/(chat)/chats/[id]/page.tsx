@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { emailSchema } from '@/lib/validations';
-import { ChevronDown, Eye } from 'lucide-react';
+import { ChevronDown, Eye, FileText, Image as ImageIcon, X, Download } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 
@@ -76,6 +76,16 @@ export default function ChatDetail({
   const [leftSenders, setLeftSenders] = useState<string[]>([]);
   const [rightSenders, setRightSenders] = useState<string[]>([]);
   const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
+  const [assets, setAssets] = useState<
+    Array<{
+      id: string;
+      messageId: string;
+      fileName: string;
+      fileUrl: string;
+      fileType: string;
+      fileSize: number;
+    }>
+  >([]);
 
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
@@ -137,6 +147,25 @@ export default function ChatDetail({
     };
 
     fetchChat();
+  }, [id]);
+
+  // Fetch assets
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchAssets = async () => {
+      try {
+        const response = await fetch(`/api/assets?chatId=${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAssets(data.assets || []);
+        }
+      } catch (error) {
+        console.error('Error fetching assets:', error);
+      }
+    };
+
+    fetchAssets();
   }, [id]);
 
   const addSharedUser = async () => {
@@ -247,6 +276,25 @@ export default function ChatDetail({
       toast.error('Failed to update share settings');
     } finally {
       setIsSavingShare(false);
+    }
+  };
+
+  const deleteAsset = async (assetId: string) => {
+    try {
+      const response = await fetch(`/api/assets/${assetId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete asset');
+      }
+
+      // Remove from local state
+      setAssets((prev) => prev.filter((asset) => asset.id !== assetId));
+      toast.success('File deleted');
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      toast.error('Failed to delete file');
     }
   };
 
@@ -1272,6 +1320,79 @@ export default function ChatDetail({
                             >
                               {msg.timestamp}
                             </p>
+
+                            {/* Display assets */}
+                            {assets.filter((asset) => asset.messageId === msg.id)
+                              .length > 0 && (
+                              <div className='mt-3 space-y-2'>
+                                {assets
+                                  .filter((asset) => asset.messageId === msg.id)
+                                  .map((asset) => (
+                                    <div
+                                      key={asset.id}
+                                      className={cn(
+                                        'flex items-center gap-2 p-2 rounded text-xs group/asset',
+                                        isLeft
+                                          ? 'bg-muted'
+                                          : 'bg-primary-foreground/20'
+                                      )}
+                                    >
+                                      {asset.fileType.startsWith('image/') ? (
+                                        <div className='flex items-start gap-2 w-full'>
+                                          <img
+                                            src={asset.fileUrl}
+                                            alt={asset.fileName}
+                                            className='max-w-[200px] max-h-[200px] rounded object-cover'
+                                          />
+                                          <div className='flex-1 min-w-0'>
+                                            <p className='truncate font-medium'>
+                                              {asset.fileName}
+                                            </p>
+                                            <p className='text-xs opacity-70'>
+                                              {(asset.fileSize / 1024).toFixed(1)} KB
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <FileText className='w-4 h-4 flex-shrink-0' />
+                                          <div className='flex-1 min-w-0'>
+                                            <p className='truncate font-medium'>
+                                              {asset.fileName}
+                                            </p>
+                                            <p className='text-xs opacity-70'>
+                                              {(asset.fileSize / 1024).toFixed(1)} KB
+                                            </p>
+                                          </div>
+                                        </>
+                                      )}
+                                      <div className='flex gap-1'>
+                                        <a
+                                          href={asset.fileUrl}
+                                          target='_blank'
+                                          rel='noopener noreferrer'
+                                          download
+                                          className='hover:bg-background/20 rounded p-1'
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <Download className='w-3 h-3' />
+                                        </a>
+                                        {isOwner && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteAsset(asset.id);
+                                            }}
+                                            className='hover:bg-destructive/20 rounded p-1 opacity-0 group-hover/asset:opacity-100 transition-opacity'
+                                          >
+                                            <X className='w-3 h-3' />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
