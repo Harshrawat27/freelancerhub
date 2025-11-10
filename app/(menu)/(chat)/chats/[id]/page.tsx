@@ -1536,7 +1536,7 @@ export default function ChatDetail({
                               <div
                                 className={cn(
                                   'mt-3 space-y-2',
-                                  !editMode && 'opacity-50'
+                                  !editMode && 'opacity-100'
                                 )}
                               >
                                 {/* Existing assets */}
@@ -1553,13 +1553,13 @@ export default function ChatDetail({
                                       )}
                                     >
                                       {asset.fileType.startsWith('image/') ? (
-                                        <div className='flex items-start gap-2 w-full'>
+                                        <div className='flex flex-col items-start gap-2 flex-1 min-w-0'>
                                           <img
                                             src={asset.fileUrl}
                                             alt={asset.fileName}
                                             className='max-w-[200px] max-h-[200px] rounded object-cover'
                                           />
-                                          <div className='flex-1 min-w-0'>
+                                          <div className='flex-1 min-w-0 overflow-hidden'>
                                             <p className='truncate font-medium'>
                                               {asset.fileName}
                                             </p>
@@ -1574,7 +1574,7 @@ export default function ChatDetail({
                                       ) : (
                                         <>
                                           <FileText className='w-4 h-4 shrink-0' />
-                                          <div className='flex-1 min-w-0'>
+                                          <div className='flex-1 min-w-0 overflow-hidden'>
                                             <p className='truncate font-medium'>
                                               {asset.fileName}
                                             </p>
@@ -1587,7 +1587,7 @@ export default function ChatDetail({
                                           </div>
                                         </>
                                       )}
-                                      <div className='flex gap-1'>
+                                      <div className='flex gap-1 shrink-0'>
                                         <a
                                           href={asset.fileUrl}
                                           target='_blank'
@@ -1643,11 +1643,11 @@ export default function ChatDetail({
                                           )}
                                         >
                                           {file.type.startsWith('image/') ? (
-                                            <ImageIcon className='w-4 h-4 flex-shrink-0' />
+                                            <ImageIcon className='w-4 h-4 shrink-0' />
                                           ) : (
-                                            <FileText className='w-4 h-4 flex-shrink-0' />
+                                            <FileText className='w-4 h-4 shrink-0' />
                                           )}
-                                          <div className='flex-1 min-w-0'>
+                                          <div className='flex-1 min-w-0 overflow-hidden'>
                                             <p className='truncate font-medium'>
                                               {file.name}
                                             </p>
@@ -1664,7 +1664,7 @@ export default function ChatDetail({
                                                 file.name
                                               );
                                             }}
-                                            className='hover:bg-destructive/20 rounded p-1'
+                                            className='hover:bg-destructive/20 rounded p-1 shrink-0'
                                           >
                                             <X className='w-3 h-3' />
                                           </button>

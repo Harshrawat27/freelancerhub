@@ -771,7 +771,10 @@ export default function CreateChats() {
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Create chat first then you will be able to upload assets</p>
+                              <p>
+                                Save chat first then you will be able to upload
+                                assets
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -783,17 +786,6 @@ export default function CreateChats() {
             </div>
           </div>
         </div>
-
-        {/* Upload Dialog */}
-        {currentMessageId && (
-          <MessageAssetUpload
-            messageId={currentMessageId}
-            open={uploadDialogOpen}
-            onOpenChange={setUploadDialogOpen}
-            onFilesAdded={handleFilesAdded}
-            existingFiles={messageAssets[currentMessageId] || []}
-          />
-        )}
       </main>
     </div>
   );
