@@ -457,10 +457,10 @@ export default function ChatDetail({
   const parseChat = (
     text: string,
     savedPositions?: { left: string[]; right: string[] } | null
-  ) => {
+  ): Message[] => {
     if (!text.trim()) {
       setParsedMessages([]);
-      return;
+      return [];
     }
 
     let messages: Message[] = [];
@@ -566,6 +566,8 @@ export default function ChatDetail({
         setLeftSenders(uniqueSenders.slice(1));
       }
     }
+
+    return messages;
   };
 
   const moveSenderToRight = (sender: string) => {
@@ -662,13 +664,15 @@ export default function ChatDetail({
         const updatedChat = await response.json();
         setChat(updatedChat);
 
-        // Re-parse to get new message IDs
-        parseChat(rawChat, { left: leftSenders, right: rightSenders });
+        // Re-parse to get new message IDs (returns messages immediately)
+        const newMessages = parseChat(rawChat, {
+          left: leftSenders,
+          right: rightSenders,
+        });
 
         // Compare old and new messages to find changed IDs
         const updates: Array<{ oldMessageId: string; newMessageId: string }> =
           [];
-        const newMessages = parsedMessages;
 
         for (
           let i = 0;
