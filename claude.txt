@@ -29,3 +29,4 @@ todo left to launch it:
 - assets management page create
 - in chat list we have to add pdf what someone shared with us and give it a tag
 - encrypt chats before saving!
+- editing message is not working, assets are being misplaced. 
