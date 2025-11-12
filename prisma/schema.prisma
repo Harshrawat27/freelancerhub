@@ -112,7 +112,7 @@ model TeamMember {
 model Chat {
   id              String          @id @default(cuid())
   title           String
-  rawText         String          @db.Text
+  rawText         Json
   senderPositions Json?
   nameMapping     Json?
   isPublic        Boolean         @default(false)

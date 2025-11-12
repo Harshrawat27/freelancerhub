@@ -18,6 +18,11 @@ import {
 import { authClient } from '@/lib/auth-client';
 import { LiveblocksRoomProvider } from '@/lib/realtime/providers/LiveblocksRoomProvider';
 import { toast } from 'sonner';
+import {
+  parseTextToMessages,
+  deserializeMessages,
+  isJsonFormat,
+} from '@/lib/message-utils';
 
 interface Message {
   id: string;
@@ -48,22 +53,6 @@ interface Asset {
   fileSize: number;
   createdAt: string;
 }
-
-// Hash function to create stable message IDs (must match /chats/[id] implementation)
-const createStableMessageId = (
-  timestamp: string,
-  sender: string,
-  message: string
-): string => {
-  const content = `${timestamp}|${sender}|${message}`;
-  let hash = 0;
-  for (let i = 0; i < content.length; i++) {
-    const char = content.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(36);
-};
 
 // Inner component that uses Liveblocks hooks
 function SharedChatPageContent({ chatId }: { chatId: string }) {
@@ -145,7 +134,16 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
 
         const data = await response.json();
         setChat(data);
-        parseChat(data.rawText, data.senderPositions);
+
+        // Check if data is in JSON format or old text format
+        if (isJsonFormat(data.rawText)) {
+          // New JSON format - deserialize
+          const messages = deserializeMessages(data.rawText);
+          setParsedMessages(messages);
+        } else {
+          // Old text format - parse as text
+          parseChat(data.rawText, data.senderPositions);
+        }
       } catch (error) {
         console.error('Error fetching shared chat:', error);
         setError('Failed to load chat');
@@ -468,50 +466,14 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     chatText: string,
     savedPositions?: { left: string[]; right: string[] } | null
   ) => {
-    let messages: Message[] = [];
-
     // Check if this is website format and convert to WhatsApp format first
     const websiteTimestampPattern = /^\d{1,2}\s+\w+,\s+\d{1,2}:\d{2}$/m;
     if (websiteTimestampPattern.test(chatText)) {
       chatText = convertWebsiteToWhatsApp(chatText);
     }
 
-    // Try WhatsApp format: [date, time] Name: Message
-    const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
-    let match;
-
-    while ((match = whatsappRegex.exec(chatText)) !== null) {
-      const timestamp = match[1].trim();
-      const sender = match[2].trim();
-      const message = match[3].trim();
-
-      messages.push({
-        id: createStableMessageId(timestamp, sender, message),
-        timestamp,
-        sender,
-        message,
-      });
-    }
-
-    // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
-    if (messages.length === 0) {
-      const telegramRegex =
-        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
-
-      while ((match = telegramRegex.exec(chatText)) !== null) {
-        const sender = match[1].trim();
-        const timestamp = match[2].trim();
-        const message = match[3].trim();
-
-        messages.push({
-          id: createStableMessageId(timestamp, sender, message),
-          sender,
-          timestamp,
-          message,
-        });
-      }
-    }
-
+    // Use utility function to parse text to messages
+    const messages = parseTextToMessages(chatText, savedPositions);
     setParsedMessages(messages);
   };
 

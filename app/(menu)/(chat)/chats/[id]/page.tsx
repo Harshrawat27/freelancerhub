@@ -44,6 +44,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  type Message as MessageType,
+  parseTextToMessages,
+  messagesToText,
+  reconcileMessages,
+  serializeMessages,
+  deserializeMessages,
+  isJsonFormat,
+} from '@/lib/message-utils';
 
 interface Message {
   id: string;
@@ -112,22 +121,6 @@ export default function ChatDetail({
   const [previousMessages, setPreviousMessages] = useState<Message[]>([]);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
 
-  // Hash function to create stable message IDs
-  const createStableMessageId = (
-    timestamp: string,
-    sender: string,
-    message: string
-  ): string => {
-    const content = `${timestamp}|${sender}|${message}`;
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36);
-  };
-
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
 
@@ -157,7 +150,6 @@ export default function ChatDetail({
 
         const data = await response.json();
         setChat(data);
-        setRawChat(data.rawText);
         setChatTitle(data.title);
 
         // Load sender positions and name mapping
@@ -177,8 +169,28 @@ export default function ChatDetail({
           setSharedWith(data.sharedWith);
         }
 
-        // Parse the chat immediately
-        parseChat(data.rawText, data.senderPositions);
+        // Check if data is in JSON format or old text format
+        if (isJsonFormat(data.rawText)) {
+          // New JSON format - deserialize
+          const messages = deserializeMessages(data.rawText);
+          // Apply sender positions
+          if (data.senderPositions) {
+            messages.forEach((msg) => {
+              if (data.senderPositions.left.includes(msg.sender)) {
+                msg.isLeft = true;
+              } else if (data.senderPositions.right.includes(msg.sender)) {
+                msg.isLeft = false;
+              }
+            });
+          }
+          setParsedMessages(messages);
+          // Set rawChat as text for editing
+          setRawChat(messagesToText(messages));
+        } else {
+          // Old text format - parse as text
+          setRawChat(data.rawText);
+          parseChat(data.rawText, data.senderPositions);
+        }
       } catch (error) {
         console.error('Error fetching chat:', error);
         toast.error('Failed to load chat');
@@ -453,7 +465,7 @@ export default function ChatDetail({
     toast.success('Link copied to clipboard!');
   };
 
-  // Parse chat text
+  // Parse chat text (for backward compatibility with old text format)
   const parseChat = (
     text: string,
     savedPositions?: { left: string[]; right: string[] } | null
@@ -463,93 +475,8 @@ export default function ChatDetail({
       return [];
     }
 
-    let messages: Message[] = [];
-
-    // Try WhatsApp format: [date, time] Name: Message
-    const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
-    let match;
-
-    while ((match = whatsappRegex.exec(text)) !== null) {
-      const timestamp = match[1].trim();
-      const sender = match[2].trim();
-      const message = match[3].trim();
-      messages.push({
-        id: createStableMessageId(timestamp, sender, message),
-        timestamp,
-        sender,
-        message,
-        isRedacted: false,
-        originalIndex: match.index,
-        originalLength: match[0].length,
-      });
-    }
-
-    // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
-    if (messages.length === 0) {
-      const telegramRegex =
-        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
-
-      while ((match = telegramRegex.exec(text)) !== null) {
-        const sender = match[1].trim();
-        const timestamp = match[2].trim();
-        const message = match[3].trim();
-        messages.push({
-          id: createStableMessageId(timestamp, sender, message),
-          sender,
-          timestamp,
-          message,
-          isRedacted: false,
-          originalIndex: match.index,
-          originalLength: match[0].length,
-        });
-      }
-    }
-
-    // If Telegram didn't work, try simple format: Name\ntimestamp\nmessage
-    if (messages.length === 0) {
-      const lines = text.split('\n').filter((line) => line.trim());
-
-      for (let i = 0; i < lines.length; i++) {
-        // Look for timestamp pattern (dates with commas or slashes)
-        const timestampPattern =
-          /\d{1,2}\s+\w+,?\s+\d{1,2}:\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}/;
-
-        if (timestampPattern.test(lines[i])) {
-          // Previous line should be the name
-          const sender = i > 0 ? lines[i - 1].trim() : 'Unknown';
-          const timestamp = lines[i].trim();
-
-          // Next lines until another timestamp are the message
-          let message = '';
-          for (let j = i + 1; j < lines.length; j++) {
-            if (timestampPattern.test(lines[j])) break;
-            if (
-              lines[j].trim() &&
-              !lines[j].includes('Profile Image') &&
-              lines[j].trim().length > 1
-            ) {
-              message += (message ? ' ' : '') + lines[j].trim();
-            }
-          }
-
-          if (
-            message &&
-            sender !== 'Me' &&
-            sender !== 'Profile Image' &&
-            sender !== 'Replied'
-          ) {
-            messages.push({
-              id: createStableMessageId(timestamp, sender, message),
-              sender,
-              timestamp,
-              message,
-              isRedacted: false,
-            });
-          }
-        }
-      }
-    }
-
+    // Use utility function to parse text to messages
+    const messages = parseTextToMessages(text, savedPositions);
     setParsedMessages(messages);
 
     // Set default sender positions if not already set
@@ -638,8 +565,21 @@ export default function ChatDetail({
         // Upload pending assets first
         await uploadPendingAssets();
 
-        // Store current messages before re-parsing
+        // Store current messages before reconciliation
         const oldMessages = [...parsedMessages];
+
+        // Reconcile messages to preserve IDs where content matches
+        const reconciledMessages = reconcileMessages(
+          oldMessages,
+          rawChat,
+          {
+            left: leftSenders,
+            right: rightSenders,
+          }
+        );
+
+        // Serialize messages to JSON
+        const messagesJson = serializeMessages(reconciledMessages);
 
         const response = await fetch(`/api/chat/${id}`, {
           method: 'PUT',
@@ -648,7 +588,7 @@ export default function ChatDetail({
           },
           body: JSON.stringify({
             title: chatTitle,
-            rawText: rawChat,
+            rawText: messagesJson, // Save as JSON
             senderPositions: {
               left: leftSenders,
               right: rightSenders,
@@ -664,32 +604,33 @@ export default function ChatDetail({
         const updatedChat = await response.json();
         setChat(updatedChat);
 
-        // Re-parse to get new message IDs (returns messages immediately)
-        const newMessages = parseChat(rawChat, {
-          left: leftSenders,
-          right: rightSenders,
-        });
+        // Update parsed messages with reconciled messages
+        setParsedMessages(reconciledMessages);
 
-        // Compare old and new messages to find changed IDs
+        // Compare old and new message IDs to update assets
         const updates: Array<{ oldMessageId: string; newMessageId: string }> =
           [];
 
-        for (
-          let i = 0;
-          i < Math.min(oldMessages.length, newMessages.length);
-          i++
-        ) {
-          if (
-            oldMessages[i] &&
-            newMessages[i] &&
-            oldMessages[i].id !== newMessages[i].id
-          ) {
+        // Create a map of old messages for efficient lookup
+        const oldMsgMap = new Map(oldMessages.map((msg) => [msg.id, msg]));
+
+        // Find messages whose IDs have changed
+        reconciledMessages.forEach((newMsg) => {
+          const signature = `${newMsg.timestamp}|${newMsg.sender}|${newMsg.message}`;
+
+          // Find the old message with same content but different ID
+          const oldMsg = oldMessages.find((om) => {
+            const oldSignature = `${om.timestamp}|${om.sender}|${om.message}`;
+            return oldSignature === signature && om.id !== newMsg.id;
+          });
+
+          if (oldMsg) {
             updates.push({
-              oldMessageId: oldMessages[i].id,
-              newMessageId: newMessages[i].id,
+              oldMessageId: oldMsg.id,
+              newMessageId: newMsg.id,
             });
           }
-        }
+        });
 
         // Update asset messageIds if any changed
         if (updates.length > 0) {

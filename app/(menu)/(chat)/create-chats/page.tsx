@@ -15,6 +15,10 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import {
+  parseTextToMessages,
+  serializeMessages,
+} from '@/lib/message-utils';
 
 interface Message {
   id: string;
@@ -53,6 +57,9 @@ export default function CreateChats() {
     setIsSaving(true);
 
     try {
+      // Serialize messages to JSON with stable IDs
+      const messagesJson = serializeMessages(parsedMessages);
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -60,7 +67,7 @@ export default function CreateChats() {
         },
         body: JSON.stringify({
           title: chatTitle,
-          rawText: rawChat,
+          rawText: messagesJson, // Save as JSON
           senderPositions: {
             left: leftSenders,
             right: rightSenders,
@@ -184,41 +191,8 @@ export default function CreateChats() {
       setRawChat(convertedText);
     }
 
-    let messages: Message[] = [];
-
-    // Try WhatsApp format: [date, time] Name: Message
-    const whatsappRegex = /\[([^\]]+)\]\s*([^:]+):\s*([\s\S]+?)(?=\n\[|$)/g;
-    let match;
-
-    while ((match = whatsappRegex.exec(chatText)) !== null) {
-      messages.push({
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: match[1].trim(),
-        sender: match[2].trim(),
-        message: match[3].trim(),
-        isRedacted: false,
-        originalIndex: match.index,
-        originalLength: match[0].length,
-      });
-    }
-
-    // If WhatsApp didn't work, try Telegram format: Name, [timestamp]: Message
-    if (messages.length === 0) {
-      const telegramRegex =
-        /([^,]+),\s*\[([^\]]+)\]:\s*([\s\S]+?)(?=\n[^,\n]+,\s*\[|$)/g;
-
-      while ((match = telegramRegex.exec(chatText)) !== null) {
-        messages.push({
-          id: Math.random().toString(36).substr(2, 9),
-          sender: match[1].trim(),
-          timestamp: match[2].trim(),
-          message: match[3].trim(),
-          isRedacted: false,
-          originalIndex: match.index,
-          originalLength: match[0].length,
-        });
-      }
-    }
+    // Use utility function to parse text to messages with stable IDs
+    const messages = parseTextToMessages(chatText);
 
     if (messages.length === 0) {
       toast.error(
