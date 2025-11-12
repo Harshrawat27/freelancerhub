@@ -30,3 +30,4 @@ todo left to launch it:
 - in chat list we have to add pdf what someone shared with us and give it a tag
 - encrypt chats before saving!
 - editing message is not working, assets are being misplaced. 
+- clicking on message and redirecting to input field not working!
