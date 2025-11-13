@@ -54,6 +54,168 @@ export function generateStableMessageId(
 }
 
 /**
+ * Convert Telegram mobile export format to WhatsApp format
+ * Input format:
+ * Initial (optional single letter)
+ * Profile Image (optional)
+ * Name
+ *
+ * Date, time
+ * Message
+ *
+ * Output: [Date, time] Name: Message
+ */
+function convertTelegramMobileToWhatsApp(text: string): string {
+  console.log('=== Starting Telegram Mobile Conversion ===');
+  console.log('Input text:', text.substring(0, 200)); // Log first 200 chars
+
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+
+    // Skip empty lines at the start
+    if (!line) {
+      i++;
+      continue;
+    }
+
+    console.log(`\n--- Processing line ${i}: "${line}" ---`);
+
+    // Check if this looks like a sender line (single letter or name)
+    // Next few lines should be: [Profile Image], Name, empty, Date, Message
+    let senderName = '';
+    let startIndex = i;
+
+    // Line 1: Could be initial (single letter) or full name
+    const firstLine = lines[i].trim();
+
+    // Check if next line exists
+    if (i + 1 < lines.length) {
+      const secondLine = lines[i + 1]?.trim() || '';
+
+      // If first line is single letter/char and second line is not empty and not a date
+      if (
+        firstLine.length <= 2 &&
+        secondLine &&
+        !secondLine.match(/^\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2}/)
+      ) {
+        console.log('  -> Detected single letter initial');
+        // First line is initial, check if second line is "Profile Image" or name
+        if (secondLine.toLowerCase().includes('profile image')) {
+          console.log('  -> Found "Profile Image", looking for name on line', i + 2);
+          // Third line should be the name
+          if (i + 2 < lines.length) {
+            senderName = lines[i + 2].trim();
+            console.log('  -> Sender name:', senderName);
+            i += 3; // Skip initial, "Profile Image", and name
+          } else {
+            i++;
+            continue;
+          }
+        } else {
+          // Second line is the name
+          senderName = secondLine;
+          console.log('  -> Sender name (from second line):', senderName);
+          i += 2; // Skip initial and name
+        }
+      } else {
+        // First line is the full name (like "Me")
+        senderName = firstLine;
+        console.log('  -> Sender name (full name):', senderName);
+        i += 1;
+      }
+    } else {
+      i++;
+      continue;
+    }
+
+    // Skip empty line
+    console.log('  -> Skipping empty lines...');
+    while (i < lines.length && !lines[i].trim()) {
+      i++;
+    }
+
+    // Next line should be date/time
+    if (i >= lines.length) {
+      console.log('  -> Reached end of lines');
+      break;
+    }
+
+    const dateTimeLine = lines[i].trim();
+    console.log('  -> Checking date/time line:', dateTimeLine);
+    const dateTimeMatch = dateTimeLine.match(
+      /^(\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2})$/
+    );
+
+    if (!dateTimeMatch) {
+      // Not a valid date/time, skip this block
+      console.log('  -> Not a valid date/time format, skipping');
+      i++;
+      continue;
+    }
+
+    const dateTime = dateTimeMatch[1];
+    console.log('  -> Date/time:', dateTime);
+    i++;
+
+    // Next lines are the message (until we hit another sender pattern or end)
+    const messageLines: string[] = [];
+
+    while (i < lines.length) {
+      const currentLine = lines[i];
+
+      // Check if this is the start of a new message block
+      // (single letter, or name followed by empty line and date)
+      const isNewBlock =
+        i + 2 < lines.length &&
+        currentLine.trim() &&
+        currentLine.trim().length > 0 &&
+        !lines[i + 1]?.trim() && // Next line is empty
+        lines[i + 2]?.trim().match(/^\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2}/); // Line after that is date
+
+      // Or if it's a single letter followed by name
+      const isSingleLetterBlock =
+        currentLine.trim().length <= 2 &&
+        i + 1 < lines.length &&
+        lines[i + 1]?.trim() &&
+        !lines[i + 1]?.trim().match(/^\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2}/);
+
+      if (isNewBlock || isSingleLetterBlock) {
+        break;
+      }
+
+      messageLines.push(currentLine);
+      i++;
+    }
+
+    const message = messageLines.join('\n').trim();
+    console.log('  -> Message text:', message);
+
+    if (senderName && dateTime && message) {
+      // Convert to WhatsApp format
+      const formatted = `[${dateTime}] ${senderName}: ${message}`;
+      console.log('  -> ✓ Added formatted message:', formatted);
+      result.push(formatted);
+    } else {
+      console.log('  -> ✗ Skipping - missing data:', {
+        senderName,
+        dateTime,
+        hasMessage: !!message,
+      });
+    }
+  }
+
+  console.log('\n=== Conversion Complete ===');
+  console.log('Total messages converted:', result.length);
+  console.log('Output:', result.join('\n'));
+
+  return result.join('\n');
+}
+
+/**
  * Parse WhatsApp/Telegram text format into structured messages with stable IDs
  * Supports formats like:
  * - [20/10/24, 10:30:45 pm] Name: Message
@@ -67,19 +229,67 @@ export function parseTextToMessages(
     return [];
   }
 
-  const lines = text.split('\n');
+  // Try to detect and convert Telegram mobile format
+  // Check if it's Telegram mobile format: has dates like "09 Nov, 12:24" without brackets
+  const isTelegramMobile =
+    /^\w+\s*\n\s*\n\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2}/m.test(text) || // Pattern: Name\n\nDate
+    /^[A-Z]\s*\n\w+\s*\n\s*\n\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2}/m.test(text); // Pattern: Initial\nName\n\nDate
+
+  // If text doesn't contain standard patterns, try mobile format conversion
+  const hasStandardFormat =
+    (text.includes('[') && text.includes(':')) || // Has brackets and colon
+    /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(text); // Date with slashes
+
+  let processedText = text;
+  if (!hasStandardFormat || isTelegramMobile) {
+    // Try to convert from mobile format
+    const converted = convertTelegramMobileToWhatsApp(text);
+    if (converted && converted.trim()) {
+      processedText = converted;
+      console.log('Converted Telegram mobile format:', converted);
+    }
+  }
+
+  const lines = processedText.split('\n');
   const messages: Message[] = [];
   let currentMessage: Message | null = null;
 
   // Regex patterns for different message formats
+  // WhatsApp format: [20/10/24, 10:30:45 pm] Name: Message
   const whatsappPattern =
-    /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?)\]?\s*[-:]?\s*([^:]+):\s*(.*)$/i;
+    /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?)\]?\s*[-:–—]?\s*([^:]+?):\s*(.*)$/i;
+
+  // Telegram format: Name, [20 Aug 2025 at 2:54:44 PM]:
+  const telegramPattern =
+    /^([^,]+?),\s*\[(\d{1,2}\s+\w{3}\s+\d{4}\s+at\s+\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))\]:\s*(.*)$/i;
+
+  // Converted Telegram mobile format: [09 Nov, 12:24] Name: Message
+  const convertedTelegramMobilePattern =
+    /^\[(\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2})\]\s+([^:]+?):\s*(.*)$/i;
 
   for (const line of lines) {
     const trimmedLine = line.trim();
     if (!trimmedLine) continue;
 
-    const match = trimmedLine.match(whatsappPattern);
+    // Try different formats in order
+    let match = trimmedLine.match(convertedTelegramMobilePattern);
+    let formatType: 'telegram' | 'whatsapp' | 'mobile' = 'mobile';
+
+    if (match) {
+      formatType = 'mobile';
+    } else {
+      // Try Telegram desktop format
+      match = trimmedLine.match(telegramPattern);
+      if (match) {
+        formatType = 'telegram';
+      } else {
+        // Try WhatsApp format
+        match = trimmedLine.match(whatsappPattern);
+        if (match) {
+          formatType = 'whatsapp';
+        }
+      }
+    }
 
     if (match) {
       // Save previous message if exists
@@ -87,10 +297,27 @@ export function parseTextToMessages(
         messages.push(currentMessage);
       }
 
-      // Start new message
-      const timestamp = normalizeTimestamp(match[1].trim());
-      const sender = match[2].trim();
-      const messageText = match[3].trim();
+      // Extract timestamp, sender, message based on format
+      let timestamp: string;
+      let sender: string;
+      let messageText: string;
+
+      if (formatType === 'telegram') {
+        // Telegram desktop format: match[1]=sender, match[2]=timestamp, match[3]=message
+        sender = match[1].trim();
+        timestamp = normalizeTimestamp(match[2].trim());
+        messageText = match[3].trim();
+      } else if (formatType === 'mobile') {
+        // Converted mobile format: match[1]=timestamp, match[2]=sender, match[3]=message
+        timestamp = normalizeTimestamp(match[1].trim());
+        sender = match[2].trim();
+        messageText = match[3].trim();
+      } else {
+        // WhatsApp format: match[1]=timestamp, match[2]=sender, match[3]=message
+        timestamp = normalizeTimestamp(match[1].trim());
+        sender = match[2].trim();
+        messageText = match[3].trim();
+      }
 
       const messageId = generateStableMessageId(timestamp, sender, messageText);
 

@@ -288,25 +288,37 @@ export default function CreateChats() {
     if (!editMode) return;
 
     const message = parsedMessages.find((msg) => msg.id === id);
-    if (
-      !message ||
-      message.originalIndex === undefined ||
-      message.originalLength === undefined
-    ) {
+    if (!message || !textareaRef.current) {
       return;
     }
 
-    // Focus textarea and select the message text
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(
-        message.originalIndex,
-        message.originalIndex + message.originalLength
-      );
-      textareaRef.current.scrollTop =
-        (message.originalIndex / rawChat.length) *
-        textareaRef.current.scrollHeight;
+    // Find the message in the textarea content
+    // Message format: [timestamp] sender: message
+    const messagePattern = `[${message.timestamp}] ${message.sender}: ${message.message.split('\n')[0]}`;
+    const messageIndex = rawChat.indexOf(messagePattern);
+
+    if (messageIndex === -1) {
+      console.warn('Could not find message in textarea');
+      return;
     }
+
+    // Calculate the full message length (including multiline content)
+    const fullMessageText = `[${message.timestamp}] ${message.sender}: ${message.message}`;
+    const messageLength = fullMessageText.length;
+
+    // Focus textarea and select the message text
+    textareaRef.current.focus();
+    textareaRef.current.setSelectionRange(
+      messageIndex,
+      messageIndex + messageLength
+    );
+
+    // Scroll to make the selection visible
+    const lineHeight = parseInt(
+      window.getComputedStyle(textareaRef.current).lineHeight
+    );
+    const lines = rawChat.substring(0, messageIndex).split('\n').length;
+    textareaRef.current.scrollTop = (lines - 1) * lineHeight;
 
     setSelectedMessage(id);
     // toast.info('Message selected in textarea - edit and parse again!');
