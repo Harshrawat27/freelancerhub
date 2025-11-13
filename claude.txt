@@ -32,3 +32,11 @@ todo left to launch it:
 - editing message is not working, assets are being misplaced. 
 - clicking on message and redirecting to input field not working!
 - i just have one question for you what if user will add 2 messages above, 2nd message would be exactly like last one, how ID will react?
+
+
+
+final changes before launch!
+- encrypt messages
+- this edit text not working for whatsapp, telegram on /create-chat page
+- add upword message parsing
+- add user flow for unregisterd, registered and paid user

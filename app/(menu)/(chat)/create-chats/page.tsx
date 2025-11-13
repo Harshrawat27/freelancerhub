@@ -15,10 +15,8 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import {
-  parseTextToMessages,
-  serializeMessages,
-} from '@/lib/message-utils';
+import { parseTextToMessages, serializeMessages } from '@/lib/message-utils';
+import { log } from 'console';
 
 interface Message {
   id: string;
@@ -288,13 +286,16 @@ export default function CreateChats() {
     if (!editMode) return;
 
     const message = parsedMessages.find((msg) => msg.id === id);
+    // console.log(message);
     if (!message || !textareaRef.current) {
       return;
     }
 
     // Find the message in the textarea content
     // Message format: [timestamp] sender: message
-    const messagePattern = `[${message.timestamp}] ${message.sender}: ${message.message.split('\n')[0]}`;
+    const messagePattern = `[${message.timestamp}] ${message.sender}: ${
+      message.message.split('\n')[0]
+    }`;
     const messageIndex = rawChat.indexOf(messagePattern);
 
     if (messageIndex === -1) {
@@ -324,15 +325,15 @@ export default function CreateChats() {
     // toast.info('Message selected in textarea - edit and parse again!');
   };
 
-  const copyToClipboard = () => {
-    const chatText = parsedMessages
-      .map((msg) => {
-        return `[${msg.timestamp}] ${msg.sender}: ${msg.message}`;
-      })
-      .join('\n');
-    navigator.clipboard.writeText(chatText);
-    toast.success('Chat text copied to clipboard!');
-  };
+  // const copyToClipboard = () => {
+  //   const chatText = parsedMessages
+  //     .map((msg) => {
+  //       return `[${msg.timestamp}] ${msg.sender}: ${msg.message}`;
+  //     })
+  //     .join('\n');
+  //   navigator.clipboard.writeText(chatText);
+  //   toast.success('Chat text copied to clipboard!');
+  // };
 
   const downloadChat = () => {
     const chatText = parsedMessages
