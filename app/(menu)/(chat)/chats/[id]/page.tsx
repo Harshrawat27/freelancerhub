@@ -569,14 +569,10 @@ export default function ChatDetail({
         const oldMessages = [...parsedMessages];
 
         // Reconcile messages to preserve IDs where content matches
-        const reconciledMessages = reconcileMessages(
-          oldMessages,
-          rawChat,
-          {
-            left: leftSenders,
-            right: rightSenders,
-          }
-        );
+        const reconciledMessages = reconcileMessages(oldMessages, rawChat, {
+          left: leftSenders,
+          right: rightSenders,
+        });
 
         // Serialize messages to JSON
         const messagesJson = serializeMessages(reconciledMessages);
@@ -780,7 +776,7 @@ export default function ChatDetail({
               <button
                 onClick={() => router.push(`/share/${id}`)}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
+                  'flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium',
                   'bg-secondary text-secondary-foreground',
                   'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
                   'hover:bg-secondary/80',
@@ -1570,7 +1566,9 @@ export default function ChatDetail({
                                               e.stopPropagation();
                                               deleteAsset(asset.id);
                                             }}
-                                            disabled={deletingAssetId === asset.id}
+                                            disabled={
+                                              deletingAssetId === asset.id
+                                            }
                                             className='hover:bg-destructive/20 rounded p-1 cursor-pointer transition-colors disabled:cursor-not-allowed'
                                           >
                                             {deletingAssetId === asset.id ? (
