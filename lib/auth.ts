@@ -13,7 +13,11 @@ export const auth = betterAuth({
     enabled: true,
   },
 
-  trustedOrigins: ['http://localhost:3000', 'https://chatshare.co'],
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://chatshare.co',
+    'https://www.chatshare.co',
+  ],
 
   socialProviders: {
     google: {

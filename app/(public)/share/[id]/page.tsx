@@ -178,11 +178,20 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   // Debug: Log message IDs and asset message IDs
   useEffect(() => {
     if (parsedMessages.length > 0 && assets.length > 0) {
-      console.log('Parsed Message IDs:', parsedMessages.map(m => m.id));
-      console.log('Asset Message IDs:', assets.map(a => a.messageId));
-      console.log('Messages with assets:', parsedMessages.filter(msg =>
-        assets.some(asset => asset.messageId === msg.id)
-      ).map(m => ({ id: m.id, sender: m.sender })));
+      console.log(
+        'Parsed Message IDs:',
+        parsedMessages.map((m) => m.id)
+      );
+      console.log(
+        'Asset Message IDs:',
+        assets.map((a) => a.messageId)
+      );
+      console.log(
+        'Messages with assets:',
+        parsedMessages
+          .filter((msg) => assets.some((asset) => asset.messageId === msg.id))
+          .map((m) => ({ id: m.id, sender: m.sender }))
+      );
     }
   }, [parsedMessages, assets]);
 
@@ -640,13 +649,17 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
           </div>
         )}
 
-        <div className='flex flex-row gap-6'>
+        {/* <div className='flex flex-row gap-6'> */}
+        <div
+          className={cn('', showCommentsSidebar ? 'flex flex-row gap-6' : '')}
+        >
           {/* Chat Content */}
           <div
             ref={messagesContainerRef}
             className={cn(
-              'bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 transition-all',
-              showCommentsSidebar ? 'w-1/2' : 'w-full'
+              'bg-secondary rounded-lg shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)] p-6 transition-all w-1/2',
+              // showCommentsSidebar ? 'w-1/2' : 'w-full'
+              showCommentsSidebar ? '' : 'mx-auto'
             )}
           >
             <div className='space-y-6'>
