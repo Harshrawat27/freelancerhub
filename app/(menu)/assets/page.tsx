@@ -230,18 +230,12 @@ export default function AssetsPage() {
         />
 
         <div className='mt-6'>
-          {isLoading ? (
-            <div className='flex items-center justify-center h-64'>
-              <Loader2 className='w-8 h-8 animate-spin text-primary' />
-            </div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              loading={isLoading}
-              renderSubComponent={renderSubComponent}
-            />
-          )}
+          <DataTable
+            columns={columns}
+            data={data}
+            loading={isLoading}
+            renderSubComponent={renderSubComponent}
+          />
         </div>
       </main>
     </div>
