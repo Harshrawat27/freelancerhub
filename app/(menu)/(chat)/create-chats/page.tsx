@@ -193,9 +193,7 @@ export default function CreateChats() {
     const messages = parseTextToMessages(chatText);
 
     if (messages.length === 0) {
-      toast.error(
-        'Could not parse chat format. Please try WhatsApp or Telegram format.'
-      );
+      toast.error('Could not this parse chat format.');
       return;
     }
 
@@ -285,44 +283,95 @@ export default function CreateChats() {
   const handleMessageEdit = (id: string) => {
     if (!editMode) return;
 
-    const message = parsedMessages.find((msg) => msg.id === id);
-    // console.log(message);
-    if (!message || !textareaRef.current) {
+    const clickedMessageIndex = parsedMessages.findIndex((msg) => msg.id === id);
+    if (clickedMessageIndex === -1 || !textareaRef.current) {
       return;
     }
 
-    // Find the message in the textarea content
-    // Message format: [timestamp] sender: message
-    const messagePattern = `[${message.timestamp}] ${message.sender}: ${
-      message.message.split('\n')[0]
-    }`;
-    const messageIndex = rawChat.indexOf(messagePattern);
+    // Find the start index of ALL messages in the raw chat.
+    // The order of these indices will correspond to the order in parsedMessages.
+    const allMessageStartIndices = [];
+    const lines = rawChat.split('\n');
+    let cumulativeLength = 0;
 
-    if (messageIndex === -1) {
-      console.warn('Could not find message in textarea');
+    // Use the same regexes from the parsing utility to ensure we identify message starts correctly.
+    const whatsappPattern =
+      /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?|\d{1,2}:\d{2}\s*(?:am|pm))\]?\s*[-:–—]?\s*([^:]+?):\s*(.*)$/i;
+    const telegramPattern =
+      /^([^,]+?),\s*\[(\d{1,2}\s+\w{3}\s+\d{4}\s+at\s+\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))\]:\s*(.*)$/i;
+    const convertedTelegramMobilePattern =
+      /^\[(\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2})\]\s+([^:]+?):\s*(.*)$/i;
+    // Regex for the new generic format's timestamp
+    const genericFormatTimePattern = /^\d{1,2}:\d{2}\s+(?:AM|PM)$/i;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmedLine = line.trim();
+      let isMessageStart = false;
+
+      // Check for standard bracketed formats on the current line
+      if (
+        trimmedLine.match(whatsappPattern) ||
+        trimmedLine.match(telegramPattern) ||
+        trimmedLine.match(convertedTelegramMobilePattern)
+      ) {
+        isMessageStart = true;
+      }
+      // Check for the new generic format (current line is sender, next is timestamp)
+      else {
+        const nextLine = lines[i + 1];
+        if (
+          trimmedLine &&
+          nextLine &&
+          genericFormatTimePattern.test(nextLine.trim())
+        ) {
+          isMessageStart = true;
+        }
+      }
+
+      if (isMessageStart) {
+        allMessageStartIndices.push(cumulativeLength);
+      }
+
+      cumulativeLength += line.length + 1; // +1 for newline
+    }
+
+    if (clickedMessageIndex >= allMessageStartIndices.length) {
+      toast.error(
+        'Could not find the message to edit. The parsed messages and raw text may be out of sync.'
+      );
       return;
     }
 
-    // Calculate the full message length (including multiline content)
-    const fullMessageText = `[${message.timestamp}] ${message.sender}: ${message.message}`;
-    const messageLength = fullMessageText.length;
+    const messageStartIndex = allMessageStartIndices[clickedMessageIndex];
+    const nextMessageStartIndex =
+      allMessageStartIndices[clickedMessageIndex + 1];
+
+    // The end of the message is the start of the next message, or the end of the whole text.
+    const messageEndIndex =
+      nextMessageStartIndex !== undefined
+        ? nextMessageStartIndex
+        : rawChat.length;
+
+    // The selection should be from the start of our message to the start of the next, trimmed of trailing whitespace.
+    const selectionEnd = messageEndIndex;
+    const selectedText = rawChat.substring(messageStartIndex, selectionEnd);
+    const trimmedSelection = selectedText.trimEnd();
+    const finalEnd = messageStartIndex + trimmedSelection.length;
 
     // Focus textarea and select the message text
     textareaRef.current.focus();
-    textareaRef.current.setSelectionRange(
-      messageIndex,
-      messageIndex + messageLength
-    );
+    textareaRef.current.setSelectionRange(messageStartIndex, finalEnd);
 
     // Scroll to make the selection visible
     const lineHeight = parseInt(
       window.getComputedStyle(textareaRef.current).lineHeight
     );
-    const lines = rawChat.substring(0, messageIndex).split('\n').length;
-    textareaRef.current.scrollTop = (lines - 1) * lineHeight;
+    const linesBefore =
+      rawChat.substring(0, messageStartIndex).split('\n').length;
+    textareaRef.current.scrollTop = (linesBefore - 1) * lineHeight;
 
     setSelectedMessage(id);
-    // toast.info('Message selected in textarea - edit and parse again!');
   };
 
   // const copyToClipboard = () => {
