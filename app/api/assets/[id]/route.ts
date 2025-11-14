@@ -52,6 +52,16 @@ export async function DELETE(
       where: { id: assetId },
     });
 
+    // Update user's storage usage (decrement)
+    await prisma.user.update({
+      where: { id: asset.chat.userId },
+      data: {
+        storageUsed: {
+          decrement: asset.fileSize,
+        },
+      },
+    });
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Delete asset error:', error);

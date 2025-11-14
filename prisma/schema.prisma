@@ -17,21 +17,28 @@ datasource db {
 
 
 model User {
-  id            String        @id
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
-  clients       Client[]
-  teamMembers   TeamMember[]
-  chats         Chat[]
+  id             String        @id
+  name           String
+  email          String
+  emailVerified  Boolean
+  image          String?
+  userTier       UserTier      @default(FREE) // FREE, PRO
+  storageUsed    BigInt        @default(0) // in bytes
+  createdAt      DateTime
+  updatedAt      DateTime
+  sessions       Session[]
+  accounts       Account[]
+  clients        Client[]
+  teamMembers    TeamMember[]
+  chats          Chat[]
 
   @@unique([email])
   @@map("user")
+}
+
+enum UserTier {
+  FREE
+  PRO
 }
 
 model Session {

@@ -16,7 +16,16 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { parseTextToMessages, serializeMessages } from '@/lib/message-utils';
-import { log } from 'console';
+import {
+  calculateTotalWords,
+  trimMessagesToLimit,
+  getUserTier,
+  getTierLimits,
+  getOrCreateTempUserId,
+} from '@/lib/user-tiers';
+import { WordLimitDialog, ChatLimitDialog } from '@/components/limits';
+import { useSession } from '@/lib/auth-client';
+import { canCreateChat } from '@/lib/user-tiers';
 
 interface Message {
   id: string;
@@ -30,6 +39,7 @@ interface Message {
 
 export default function CreateChats() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [rawChat, setRawChat] = useState('');
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
   const [editMode, setEditMode] = useState(false);
@@ -41,6 +51,16 @@ export default function CreateChats() {
   const [rightSenders, setRightSenders] = useState<string[]>([]);
   const [nameMapping, setNameMapping] = useState<Record<string, string>>({});
 
+  // Word limit dialog state
+  const [showWordLimitDialog, setShowWordLimitDialog] = useState(false);
+  const [currentWords, setCurrentWords] = useState(0);
+  const [maxWords, setMaxWords] = useState(0);
+
+  // Chat limit dialog state
+  const [showChatLimitDialog, setShowChatLimitDialog] = useState(false);
+  const [currentChats, setCurrentChats] = useState(0);
+  const [maxChats, setMaxChats] = useState(0);
+
   const saveChat = async () => {
     if (!rawChat.trim() || parsedMessages.length === 0) {
       toast.error('Please parse a chat first');
@@ -50,6 +70,41 @@ export default function CreateChats() {
     if (!chatTitle.trim()) {
       toast.error('Please enter a chat title');
       return;
+    }
+
+    // Check chat count limits before saving
+    const isRegistered = !!session?.user;
+    const userTier = getUserTier(
+      isRegistered,
+      (session?.user as any)?.userTier as 'FREE' | 'PRO' | undefined
+    );
+    const tierLimits = getTierLimits(userTier);
+
+    // Get or create temp user ID if not authenticated
+    const tempUserId = !session?.user ? getOrCreateTempUserId() : undefined;
+
+    // Fetch current chat count
+    try {
+      const chatCountUrl = tempUserId
+        ? `/api/chat?tempUserId=${tempUserId}`
+        : '/api/chat';
+      const response = await fetch(chatCountUrl);
+
+      if (response.ok) {
+        const chats = await response.json();
+        const currentChatCount = chats.length;
+
+        // Check if user can create more chats
+        if (!canCreateChat(currentChatCount, userTier)) {
+          setCurrentChats(currentChatCount);
+          setMaxChats(tierLimits.maxChats);
+          setShowChatLimitDialog(true);
+          return; // Stop here, don't save
+        }
+      }
+    } catch (error) {
+      console.error('Error checking chat count:', error);
+      // Continue anyway - don't block user if API fails
     }
 
     setIsSaving(true);
@@ -71,6 +126,7 @@ export default function CreateChats() {
             right: rightSenders,
           },
           nameMapping,
+          tempUserId, // Include temp user ID for unregistered users
         }),
       });
 
@@ -197,11 +253,37 @@ export default function CreateChats() {
       return;
     }
 
-    setParsedMessages(messages);
+    // Check word limits based on user tier
+    const isRegistered = !!session?.user;
+    const userTier = getUserTier(
+      isRegistered,
+      (session?.user as any)?.userTier as 'FREE' | 'PRO' | undefined
+    );
+    const tierLimits = getTierLimits(userTier);
+
+    // Calculate total words
+    const totalWords = calculateTotalWords(messages);
+
+    let finalMessages = messages;
+    let wasTrimmed = false;
+
+    // Check if we need to trim messages
+    if (totalWords > tierLimits.maxWords) {
+      finalMessages = trimMessagesToLimit(messages, tierLimits.maxWords);
+      const trimmedWords = calculateTotalWords(finalMessages);
+
+      // Show word limit dialog
+      setCurrentWords(trimmedWords);
+      setMaxWords(tierLimits.maxWords);
+      setShowWordLimitDialog(true);
+      wasTrimmed = true;
+    }
+
+    setParsedMessages(finalMessages);
 
     // Extract unique senders and auto-populate title and assignments
     const uniqueSenders = Array.from(
-      new Set(messages.map((msg) => msg.sender))
+      new Set(finalMessages.map((msg) => msg.sender))
     );
 
     // Auto-generate title
@@ -219,7 +301,13 @@ export default function CreateChats() {
       setLeftSenders(uniqueSenders.slice(1));
     }
 
-    toast.success(`Parsed ${messages.length} messages successfully!`);
+    if (wasTrimmed) {
+      toast.warning(
+        `Parsed ${finalMessages.length} messages (trimmed to ${tierLimits.maxWords} words)`
+      );
+    } else {
+      toast.success(`Parsed ${finalMessages.length} messages successfully!`);
+    }
   };
 
   const clearChat = () => {
@@ -283,7 +371,9 @@ export default function CreateChats() {
   const handleMessageEdit = (id: string) => {
     if (!editMode) return;
 
-    const clickedMessageIndex = parsedMessages.findIndex((msg) => msg.id === id);
+    const clickedMessageIndex = parsedMessages.findIndex(
+      (msg) => msg.id === id
+    );
     if (clickedMessageIndex === -1 || !textareaRef.current) {
       return;
     }
@@ -367,8 +457,9 @@ export default function CreateChats() {
     const lineHeight = parseInt(
       window.getComputedStyle(textareaRef.current).lineHeight
     );
-    const linesBefore =
-      rawChat.substring(0, messageStartIndex).split('\n').length;
+    const linesBefore = rawChat
+      .substring(0, messageStartIndex)
+      .split('\n').length;
     textareaRef.current.scrollTop = (linesBefore - 1) * lineHeight;
 
     setSelectedMessage(id);
@@ -408,6 +499,15 @@ export default function CreateChats() {
       return 'right';
     }
     return 'left';
+  };
+
+  const handleSignup = () => {
+    router.push('/api/auth/signin');
+  };
+
+  const handleUpgrade = () => {
+    // TODO: Implement upgrade flow to Pro plan
+    toast.info('Upgrade to Pro feature coming soon!');
   };
 
   return (
@@ -823,6 +923,28 @@ export default function CreateChats() {
           </div>
         </div>
       </main>
+
+      {/* Word Limit Dialog */}
+      <WordLimitDialog
+        open={showWordLimitDialog}
+        onOpenChange={setShowWordLimitDialog}
+        currentWords={currentWords}
+        maxWords={maxWords}
+        userType={session?.user ? 'FREE' : 'UNREGISTERED'}
+        onSignup={handleSignup}
+        onUpgrade={handleUpgrade}
+      />
+
+      {/* Chat Limit Dialog */}
+      <ChatLimitDialog
+        open={showChatLimitDialog}
+        onOpenChange={setShowChatLimitDialog}
+        currentChats={currentChats}
+        maxChats={maxChats}
+        userType={session?.user ? 'FREE' : 'UNREGISTERED'}
+        onSignup={handleSignup}
+        onUpgrade={handleUpgrade}
+      />
     </div>
   );
 }

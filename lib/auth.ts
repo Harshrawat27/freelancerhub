@@ -25,4 +25,19 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+
+  callbacks: {
+    async jwt({ token, user }: { token: any; user: any }) {
+      if (user && 'userTier' in user) {
+        token.userTier = user.userTier;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: any; token: any }) {
+      if (session.user && token.userTier) {
+        session.user.userTier = token.userTier as 'FREE' | 'PRO';
+      }
+      return session;
+    },
+  },
 });

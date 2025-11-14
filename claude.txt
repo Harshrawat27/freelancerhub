@@ -39,4 +39,7 @@ final changes before launch!
 - encrypt messages
 - this edit text not working for whatsapp, telegram on /create-chat page
 - add upword message parsing
-- add user flow for unregisterd, registered and paid user
+- add user flow for unregisterd, registered and paid 
+- when user will delete assets are we deleting it from cloudfare too? 
+- if someone create chats without login but then signed in with used account what we'll do? 
+- signup button after limit reach not working! 

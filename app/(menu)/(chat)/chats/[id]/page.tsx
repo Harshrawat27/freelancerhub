@@ -53,6 +53,7 @@ import {
   deserializeMessages,
   isJsonFormat,
 } from '@/lib/message-utils';
+import { ShareRestrictionDialog } from '@/components/limits';
 
 interface Message {
   id: string;
@@ -120,6 +121,7 @@ export default function ChatDetail({
   );
   const [previousMessages, setPreviousMessages] = useState<Message[]>([]);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
+  const [showShareRestrictionDialog, setShowShareRestrictionDialog] = useState(false);
 
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
@@ -222,6 +224,12 @@ export default function ChatDetail({
   }, [id]);
 
   const addSharedUser = async () => {
+    // Check if user is authenticated
+    if (!session.data?.user) {
+      setShowShareRestrictionDialog(true);
+      return;
+    }
+
     // Validate email using Zod schema
     const result = emailSchema.safeParse(shareEmail.trim());
 
@@ -1140,28 +1148,43 @@ export default function ChatDetail({
                             <label className='text-sm font-medium text-foreground'>
                               Add people
                             </label>
-                            <div className='flex gap-2 mt-2'>
-                              <input
-                                type='email'
-                                placeholder='Enter email address...'
-                                value={shareEmail}
-                                onChange={(e) => setShareEmail(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addSharedUser();
-                                  }
-                                }}
-                                className='flex-1 px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary'
-                              />
-                              <Button
-                                onClick={addSharedUser}
-                                size='sm'
-                                className='bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
-                              >
-                                Add
-                              </Button>
-                            </div>
+                            {session.data?.user ? (
+                              <div className='flex gap-2 mt-2'>
+                                <input
+                                  type='email'
+                                  placeholder='Enter email address...'
+                                  value={shareEmail}
+                                  onChange={(e) => setShareEmail(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      addSharedUser();
+                                    }
+                                  }}
+                                  className='flex-1 px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary'
+                                />
+                                <Button
+                                  onClick={addSharedUser}
+                                  size='sm'
+                                  className='bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                                >
+                                  Add
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className='p-4 bg-muted/30 rounded-lg border border-border'>
+                                <p className='text-sm text-muted-foreground mb-3'>
+                                  Private sharing via email is available for registered users only.
+                                </p>
+                                <Button
+                                  onClick={() => setShowShareRestrictionDialog(true)}
+                                  size='sm'
+                                  className='w-full bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                                >
+                                  Sign up to share privately
+                                </Button>
+                              </div>
+                            )}
                           </div>
 
                           {/* People with access */}
@@ -1702,6 +1725,15 @@ export default function ChatDetail({
             existingFiles={pendingAssets[currentMessageId] || []}
           />
         )}
+
+        {/* Share Restriction Dialog */}
+        <ShareRestrictionDialog
+          open={showShareRestrictionDialog}
+          onOpenChange={setShowShareRestrictionDialog}
+          onSignup={() => {
+            window.location.href = '/api/auth/signin';
+          }}
+        />
       </main>
     </div>
   );

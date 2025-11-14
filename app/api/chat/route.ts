@@ -3,24 +3,36 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import prisma from '@/lib/prisma';
 
-// GET - Get all chats for the current user
-export async function GET() {
+// GET - Get all chats for the current user (or temp user)
+export async function GET(request: Request) {
   try {
     const incomingHeaders = await headers();
     const session = await auth.api.getSession({
       headers: new Headers(incomingHeaders),
     });
 
-    if (!session || !session.user || !session.user.id) {
+    // Get tempUserId from query params for unregistered users
+    const { searchParams } = new URL(request.url);
+    const tempUserId = searchParams.get('tempUserId');
+
+    // Determine user ID: either from session or temp user ID
+    let userId: string;
+    if (session?.user?.id) {
+      // Registered user
+      userId = session.user.id;
+    } else if (tempUserId && tempUserId.startsWith('temp_')) {
+      // Unregistered user with temp ID
+      userId = tempUserId;
+    } else {
       return NextResponse.json(
-        { error: 'Unauthorized or user ID missing' },
+        { error: 'Unauthorized: No valid user ID or temp user ID provided' },
         { status: 401 }
       );
     }
 
     const chats = await prisma.chat.findMany({
       where: {
-        userId: session.user.id,
+        userId,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -47,14 +59,22 @@ export async function POST(request: Request) {
       headers: new Headers(incomingHeaders),
     });
 
-    if (!session || !session.user || !session.user.id) {
+    const { title, rawText, senderPositions, nameMapping, tempUserId } = body;
+
+    // Determine user ID: either from session or temp user ID
+    let userId: string;
+    if (session?.user?.id) {
+      // Registered user
+      userId = session.user.id;
+    } else if (tempUserId && tempUserId.startsWith('temp_')) {
+      // Unregistered user with temp ID
+      userId = tempUserId;
+    } else {
       return NextResponse.json(
-        { error: 'Unauthorized or user ID missing' },
+        { error: 'Unauthorized: No valid user ID or temp user ID provided' },
         { status: 401 }
       );
     }
-
-    const { title, rawText, senderPositions, nameMapping } = body;
 
     if (!title || !rawText) {
       return NextResponse.json(
@@ -70,7 +90,7 @@ export async function POST(request: Request) {
         rawText,
         senderPositions: senderPositions || null,
         nameMapping: nameMapping || null,
-        userId: session.user.id,
+        userId,
       },
     });
 

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { uploadToR2 } from '@/lib/r2-upload';
 import prisma from '@/lib/prisma';
+import { getUserTier, getTierLimits, canUploadAsset } from '@/lib/user-tiers';
 
 // POST - Bulk upload assets for a chat
 export async function POST(request: Request) {
@@ -38,8 +39,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Get user and check storage limits
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { storageUsed: true, userTier: true },
+    });
+
+    const userTier = getUserTier(true, user?.userTier as 'FREE' | 'PRO' | undefined);
+    const tierLimits = getTierLimits(userTier);
+
+    // Check if user tier allows assets
+    if (!tierLimits.canUploadAssets) {
+      return NextResponse.json(
+        { error: 'Asset uploads are not available for unregistered users', code: 'TIER_RESTRICTION' },
+        { status: 403 }
+      );
+    }
+
+    // Calculate total size of files to upload
+    const totalUploadSize = files.reduce((sum, file) => sum + file.size, 0);
+    const currentStorage = Number(user?.storageUsed || 0);
+
+    // Check if upload would exceed storage limit
+    if (!canUploadAsset(currentStorage, totalUploadSize, userTier)) {
+      return NextResponse.json(
+        {
+          error: 'Storage limit exceeded',
+          code: 'STORAGE_LIMIT',
+          currentStorage,
+          maxStorage: tierLimits.maxStorage
+        },
+        { status: 403 }
+      );
+    }
+
     // Upload files and create asset records
     const uploadedAssets = [];
+    let totalUploadedSize = 0;
 
     for (const file of files) {
       try {
@@ -59,9 +95,22 @@ export async function POST(request: Request) {
         });
 
         uploadedAssets.push(asset);
+        totalUploadedSize += file.size;
       } catch (error) {
         console.error(`Failed to upload ${file.name}:`, error);
       }
+    }
+
+    // Update user's storage usage
+    if (totalUploadedSize > 0) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          storageUsed: {
+            increment: totalUploadedSize,
+          },
+        },
+      });
     }
 
     return NextResponse.json({ assets: uploadedAssets }, { status: 200 });
