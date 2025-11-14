@@ -16,9 +16,19 @@ export async function GET(
       headers: new Headers(incomingHeaders),
     });
 
-    if (!session || !session.user || !session.user.id) {
+    // Get tempUserId from query params for unregistered users
+    const { searchParams } = new URL(request.url);
+    const tempUserId = searchParams.get('tempUserId');
+
+    // Determine user ID: either from session or temp user ID
+    let userId: string;
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else if (tempUserId && tempUserId.startsWith('temp_')) {
+      userId = tempUserId;
+    } else {
       return NextResponse.json(
-        { error: 'Unauthorized or user ID missing' },
+        { error: 'Unauthorized: No valid user ID or temp user ID provided' },
         { status: 401 }
       );
     }
@@ -26,7 +36,7 @@ export async function GET(
     const chat = await prisma.chat.findUnique({
       where: {
         id,
-        userId: session.user.id, // Ensure user can only access their own chats
+        userId, // Ensure user can only access their own chats
       },
     });
 
@@ -58,14 +68,20 @@ export async function PUT(
       headers: new Headers(incomingHeaders),
     });
 
-    if (!session || !session.user || !session.user.id) {
+    const { title, rawText, senderPositions, nameMapping, tempUserId } = body;
+
+    // Determine user ID: either from session or temp user ID
+    let userId: string;
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else if (tempUserId && tempUserId.startsWith('temp_')) {
+      userId = tempUserId;
+    } else {
       return NextResponse.json(
-        { error: 'Unauthorized or user ID missing' },
+        { error: 'Unauthorized: No valid user ID or temp user ID provided' },
         { status: 401 }
       );
     }
-
-    const { title, rawText, senderPositions, nameMapping } = body;
 
     if (!title && !rawText && !senderPositions && !nameMapping) {
       return NextResponse.json(
@@ -78,7 +94,7 @@ export async function PUT(
     const existingChat = await prisma.chat.findUnique({
       where: {
         id,
-        userId: session.user.id,
+        userId,
       },
     });
 

@@ -121,7 +121,8 @@ export default function ChatDetail({
   );
   const [previousMessages, setPreviousMessages] = useState<Message[]>([]);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
-  const [showShareRestrictionDialog, setShowShareRestrictionDialog] = useState(false);
+  const [showShareRestrictionDialog, setShowShareRestrictionDialog] =
+    useState(false);
 
   // Check if the current user is the owner
   const isOwner = chat && session.data?.user?.id === chat.userId;
@@ -135,9 +136,22 @@ export default function ChatDetail({
   useEffect(() => {
     if (!id) return;
 
+    // Wait for session to load before fetching
+    if (session.isPending) return;
+
     const fetchChat = async () => {
       try {
-        const response = await fetch(`/api/chat/${id}`);
+        // Get temp user ID from localStorage if user is not signed in
+        const tempUserId = !session.data?.user
+          ? localStorage.getItem('temp_user_id')
+          : null;
+
+        // Build URL with tempUserId query param if needed
+        const url = tempUserId
+          ? `/api/chat/${id}?tempUserId=${tempUserId}`
+          : `/api/chat/${id}`;
+
+        const response = await fetch(url);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -202,7 +216,7 @@ export default function ChatDetail({
     };
 
     fetchChat();
-  }, [id]);
+  }, [id, session.isPending]);
 
   // Fetch assets
   useEffect(() => {
@@ -585,6 +599,11 @@ export default function ChatDetail({
         // Serialize messages to JSON
         const messagesJson = serializeMessages(reconciledMessages);
 
+        // Get temp user ID if user is not signed in
+        const tempUserId = !session.data?.user
+          ? localStorage.getItem('tempUserId')
+          : null;
+
         const response = await fetch(`/api/chat/${id}`, {
           method: 'PUT',
           headers: {
@@ -598,6 +617,7 @@ export default function ChatDetail({
               right: rightSenders,
             },
             nameMapping,
+            ...(tempUserId && { tempUserId }), // Include tempUserId if present
           }),
         });
 
@@ -687,7 +707,9 @@ export default function ChatDetail({
 
     // Find the message in the textarea content
     // Message format: [timestamp] sender: message
-    const messagePattern = `[${message.timestamp}] ${message.sender}: ${message.message.split('\n')[0]}`;
+    const messagePattern = `[${message.timestamp}] ${message.sender}: ${
+      message.message.split('\n')[0]
+    }`;
     const messageIndex = rawChat.indexOf(messagePattern);
 
     if (messageIndex === -1) {
@@ -1154,7 +1176,9 @@ export default function ChatDetail({
                                   type='email'
                                   placeholder='Enter email address...'
                                   value={shareEmail}
-                                  onChange={(e) => setShareEmail(e.target.value)}
+                                  onChange={(e) =>
+                                    setShareEmail(e.target.value)
+                                  }
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       e.preventDefault();
@@ -1172,12 +1196,15 @@ export default function ChatDetail({
                                 </Button>
                               </div>
                             ) : (
-                              <div className='p-4 bg-muted/30 rounded-lg border border-border'>
+                              <div className='p-4 bg-muted/30 rounded-lg border border-border mt-2.5'>
                                 <p className='text-sm text-muted-foreground mb-3'>
-                                  Private sharing via email is available for registered users only.
+                                  Private sharing via email is available for
+                                  registered users only.
                                 </p>
                                 <Button
-                                  onClick={() => setShowShareRestrictionDialog(true)}
+                                  onClick={() =>
+                                    setShowShareRestrictionDialog(true)
+                                  }
                                   size='sm'
                                   className='w-full bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
                                 >

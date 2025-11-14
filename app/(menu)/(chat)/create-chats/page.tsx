@@ -2,7 +2,7 @@
 
 import { Sidebar } from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,6 +60,46 @@ export default function CreateChats() {
   const [showChatLimitDialog, setShowChatLimitDialog] = useState(false);
   const [currentChats, setCurrentChats] = useState(0);
   const [maxChats, setMaxChats] = useState(0);
+
+  // Handle chat migration from temp user to registered user on sign-in
+  useEffect(() => {
+    const migrateChatsIfNeeded = async () => {
+      // Only proceed if user is authenticated
+      if (!session?.user?.id) return;
+
+      // Check if there's a temp user ID in localStorage
+      const tempUserId = localStorage.getItem('tempUserId');
+      if (!tempUserId || !tempUserId.startsWith('temp_')) return;
+
+      try {
+        const response = await fetch('/api/migrate-chats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ tempUserId }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.migratedCount > 0) {
+            toast.success(
+              `Successfully migrated ${data.migratedCount} chat${
+                data.migratedCount > 1 ? 's' : ''
+              } to your account!`
+            );
+          }
+          // Remove temp user ID from localStorage after successful migration
+          localStorage.removeItem('tempUserId');
+        }
+      } catch (error) {
+        console.error('Error migrating chats:', error);
+        // Don't show error to user - fail silently to avoid confusion
+      }
+    };
+
+    migrateChatsIfNeeded();
+  }, [session?.user?.id]);
 
   const saveChat = async () => {
     if (!rawChat.trim() || parsedMessages.length === 0) {
@@ -563,7 +603,7 @@ export default function CreateChats() {
             {/* Title and Sender Assignment */}
             {parsedMessages.length > 0 && (
               // <div className='bg-secondary rounded-lg p-6 shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.01)] dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]'>
-              <div>
+              <div className='px-1'>
                 {/* Title Input */}
                 <div className='mb-4'>
                   <label className='text-sm font-medium text-foreground mb-2 block'>
