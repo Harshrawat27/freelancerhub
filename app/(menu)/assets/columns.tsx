@@ -47,7 +47,18 @@ export const getColumns = (
   },
   {
     accessorKey: 'assets',
-    header: 'Asset Count',
+    header: ({ column }) => (
+      <div className='text-center'>
+        <Button
+          variant='ghost'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className='w-full justify-center'
+        >
+          Asset Count
+          <ArrowUpDown className='ml-2 h-4 w-4' />
+        </Button>
+      </div>
+    ),
     cell: ({ row }) => {
       const assets = row.getValue('assets') as any[];
       return <div className='text-center'>{assets.length}</div>;
@@ -63,24 +74,27 @@ export const getColumns = (
           )
         : new Date(0),
     header: ({ column }) => (
-      <Button
-        variant='ghost'
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        Last Upload
-        <ArrowUpDown className='ml-2 h-4 w-4' />
-      </Button>
+      <div className='text-center'>
+        <Button
+          variant='ghost'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className='w-full justify-center'
+        >
+          Last Upload
+          <ArrowUpDown className='ml-2 h-4 w-4' />
+        </Button>
+      </div>
     ),
     cell: ({ row }) => {
       const assets = row.original.assets;
       if (assets.length === 0) {
-        return <div className='text-muted-foreground'>-</div>;
+        return <div className='text-muted-foreground text-center'>-</div>;
       }
       const lastDate = new Date(
         Math.max(...assets.map((a) => new Date(a.createdAt).getTime()))
       );
       return (
-        <div className='text-muted-foreground'>
+        <div className='text-muted-foreground text-center'>
           {lastDate.toLocaleDateString()}
         </div>
       );
