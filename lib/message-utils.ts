@@ -587,11 +587,9 @@ export function parseTextToMessages(
 
   // Regex patterns for different message formats
 
-  // WhatsApp format: [20/10/24, 10:30:45 pm] Name: Message
+  // Main generic pattern for [timestamp] sender: message
 
-  const whatsappPattern =
-
-    /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?|\d{1,2}:\d{2}\s*(?:am|pm))\]?\s*[-:–—]?\s*([^:]+?):\s*(.*)$/i;
+  const mainPattern = /^\[(.+?)\]\s*([^:]+?):\s*(.*)$/i;
 
 
 
@@ -600,14 +598,6 @@ export function parseTextToMessages(
   const telegramPattern =
 
     /^([^,]+?),\s*\[(\d{1,2}\s+\w{3}\s+\d{4}\s+at\s+\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))\]:\s*(.*)$/i;
-
-
-
-  // Converted Telegram mobile format: [09 Nov, 12:24] Name: Message
-
-  const convertedTelegramMobilePattern =
-
-    /^\[(\d{1,2}\s+\w{3},\s+\d{1,2}:\d{2})\]\s+([^:]+?):\s*(.*)$/i;
 
 
 
@@ -621,39 +611,21 @@ export function parseTextToMessages(
 
     // Try different formats in order
 
-    let match = trimmedLine.match(convertedTelegramMobilePattern);
+    let match = trimmedLine.match(telegramPattern);
 
-    let formatType: 'telegram' | 'whatsapp' | 'mobile' = 'mobile';
+    let formatType: 'telegram' | 'main' = 'main';
 
 
 
     if (match) {
 
-      formatType = 'mobile';
+      formatType = 'telegram';
 
     } else {
 
-      // Try Telegram desktop format
+      // Fallback to the main generic pattern
 
-      match = trimmedLine.match(telegramPattern);
-
-      if (match) {
-
-        formatType = 'telegram';
-
-      } else {
-
-        // Try WhatsApp format (now more generic)
-
-        match = trimmedLine.match(whatsappPattern);
-
-        if (match) {
-
-          formatType = 'whatsapp';
-
-        }
-
-      }
+      match = trimmedLine.match(mainPattern);
 
     }
 
@@ -691,19 +663,9 @@ export function parseTextToMessages(
 
         messageText = match[3].trim();
 
-      } else if (formatType === 'mobile') {
-
-        // Converted mobile format: match[1]=timestamp, match[2]=sender, match[3]=message
-
-        timestamp = normalizeTimestamp(match[1].trim());
-
-        sender = match[2].trim();
-
-        messageText = match[3].trim();
-
       } else {
 
-        // WhatsApp format: match[1]=timestamp, match[2]=sender, match[3]=message
+        // Main format: match[1]=timestamp, match[2]=sender, match[3]=message
 
         timestamp = normalizeTimestamp(match[1].trim());
 
