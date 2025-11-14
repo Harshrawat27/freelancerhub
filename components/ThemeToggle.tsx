@@ -38,7 +38,7 @@ export function ThemeToggle() {
         shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]
         dark:shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]
         hover:bg-secondary/80
-        flex items-center justify-center
+        flex items-center justify-center cursor-pointer
       '
       aria-label='Toggle theme'
     >
