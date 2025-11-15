@@ -23,6 +23,7 @@ import {
   deserializeMessages,
   isJsonFormat,
 } from '@/lib/message-utils';
+import { getTempUserId } from '@/lib/temp-user';
 
 interface Message {
   id: string;
@@ -92,45 +93,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     getUser();
   }, []);
 
-  // Generate or retrieve anonymous user ID for this browser session
-  const getAnonymousUserId = (): string => {
-    const storageKey = `anonymous-user-id-${chatId}`;
-    let anonymousId = localStorage.getItem(storageKey);
-
-    if (!anonymousId) {
-      // Generate a unique ID for this anonymous user
-      anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem(storageKey, anonymousId);
-    }
-
-    return anonymousId;
-  };
-
-  // Helper function to get anonymous user display name
-  const getAnonymousUserName = (userId: string): string => {
-    // For anonymous users (those without authentication)
-    if (!currentUser && userId) {
-      const storageKey = `anonymous-user-mapping-${chatId}`;
-      const mapping = localStorage.getItem(storageKey);
-      const userMapping: { [key: string]: number } = mapping ? JSON.parse(mapping) : {};
-
-      if (!userMapping[userId]) {
-        // Assign the next available number
-        const existingNumbers = Object.values(userMapping);
-        const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-        userMapping[userId] = nextNumber;
-        localStorage.setItem(storageKey, JSON.stringify(userMapping));
-      }
-
-      return `Anonymous User ${userMapping[userId]}`;
-    }
-
-    return 'Anonymous User';
-  };
-
-  // Determine user ID and name for comment system
-  const commentUserId = currentUser?.id || getAnonymousUserId();
-  const commentUserName = currentUser?.name || getAnonymousUserName(commentUserId);
+  // Determine user ID for comment system
+  const commentUserId = currentUser?.id || getTempUserId();
 
   // Deselect active thread when clicking outside
   useEffect(() => {
@@ -256,7 +220,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     }
   };
 
-  // Initialize comment threads hook
+  // Initialize comment threads hook with a temporary name
   const {
     threads,
     isLoading: threadsLoading,
@@ -269,9 +233,52 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   } = useCommentThreads({
     chatId: chatId,
     userId: commentUserId,
-    userName: commentUserName,
+    userName: currentUser?.name || 'Anonymous User', // Will be updated by useMemo
     userAvatar: currentUser?.image,
   });
+
+  // Smart function to determine anonymous user name based on existing comments
+  const commentUserName = React.useMemo(() => {
+    // If user is authenticated, use their real name
+    if (currentUser?.name) {
+      return currentUser.name;
+    }
+
+    // If user is not authenticated, assign anonymous number for this specific chat
+    if (!currentUser && commentUserId && chatId) {
+      // Check if this user already has an assigned number for THIS chat
+      const chatAnonKey = `${chatId}_anon_number`;
+      const existingNumber = localStorage.getItem(chatAnonKey);
+
+      if (existingNumber) {
+        return `Anonymous User ${existingNumber}`;
+      }
+
+      // User doesn't have a number for this chat yet - assign one
+      // Count how many unique temp_ userIds exist in comments for this chat
+      const uniqueTempUserIds = new Set<string>();
+
+      threads.forEach((thread) => {
+        if (thread.comments) {
+          thread.comments.forEach((comment: any) => {
+            if (comment.userId && comment.userId.startsWith('temp_')) {
+              uniqueTempUserIds.add(comment.userId);
+            }
+          });
+        }
+      });
+
+      // Assign the next number based on how many temp users already exist
+      const nextNumber = uniqueTempUserIds.size + 1;
+
+      // Save this number for this chat
+      localStorage.setItem(chatAnonKey, nextNumber.toString());
+
+      return `Anonymous User ${nextNumber}`;
+    }
+
+    return 'Anonymous User';
+  }, [currentUser, commentUserId, threads, chatId]);
 
   // Sort threads by message order (based on message position in parsedMessages array)
   const sortedThreads = React.useMemo(() => {
