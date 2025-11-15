@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/Topbar';
@@ -62,16 +62,14 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [sessionPending, setSessionPending] = useState(true);
+  const [anonymousCommenterId, setAnonymousCommenterId] = useState<
+    string | null
+  >(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [commentPositions, setCommentPositions] = useState<{
     [key: string]: number;
   }>({});
-  const [pendingSelection, setPendingSelection] = useState<{
-    messageId: string;
-    text: string;
-    startOffset: number;
-    endOffset: number;
-  } | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
   const router = useRouter();
   const threadRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -81,27 +79,78 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   // Check if the current user is the owner
   const isOwner = chat && currentUser?.id === chat.userId;
 
-  // Get current user info
+  // Get current user session
   useEffect(() => {
     const getUser = async () => {
+      setSessionPending(true);
       const session = await authClient.getSession();
       if (session?.data) {
         setCurrentUser(session.data.user);
       }
+      setSessionPending(false);
     };
-
     getUser();
   }, []);
 
+  // Effect to manage anonymous commenter ID
+  useEffect(() => {
+    if (sessionPending || currentUser) return; // Don't run if session is loading or user is logged in
+
+    const anonIdKey = `anon_commenter_id_${chatId}`;
+    let anonId = localStorage.getItem(anonIdKey);
+
+    const setupAnonymousId = async () => {
+      if (anonId) {
+        setAnonymousCommenterId(anonId);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/chat/${chatId}/anonymous-commenters-count`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to get anonymous commenter count');
+        }
+        const data = await response.json();
+        const nextAnonNumber = data.count + 1;
+        const newAnonId = `${chatId}_anon_user_${nextAnonNumber}`;
+
+        localStorage.setItem(anonIdKey, newAnonId);
+        setAnonymousCommenterId(newAnonId);
+      } catch (err) {
+        console.error('Failed to setup anonymous ID:', err);
+        // Fallback to a random ID if API fails, to not block commenting
+        const fallbackId = `${chatId}_anon_user_fallback_${Date.now()}`;
+        setAnonymousCommenterId(fallbackId);
+      }
+    };
+
+    setupAnonymousId();
+  }, [chatId, sessionPending, currentUser]);
+
   // Determine user ID for comment system
-  const commentUserId = currentUser?.id || getTempUserId();
+  const commentUserId = currentUser?.id || anonymousCommenterId;
+
+  // Determine user name for comment system
+  const commentUserName = useMemo(() => {
+    if (currentUser?.name) {
+      return currentUser.name;
+    }
+    if (anonymousCommenterId) {
+      const parts = anonymousCommenterId.split('_');
+      const number = parts[parts.length - 1];
+      if (!isNaN(parseInt(number))) {
+        return `Anonymous User ${number}`;
+      }
+    }
+    return 'Anonymous'; // Fallback name
+  }, [currentUser, anonymousCommenterId]);
 
   // Deselect active thread when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-
-      // Don't deselect if clicking on a highlight, comment thread, or interactive elements
       if (
         target.closest('.highlight-span') ||
         target.closest('.comment-thread-card') ||
@@ -111,10 +160,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
       ) {
         return;
       }
-
       setActiveThreadId(null);
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -123,7 +170,6 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     const fetchSharedChat = async () => {
       try {
         const response = await fetch(`/api/share/${chatId}`);
-
         if (!response.ok) {
           if (response.status === 403) {
             setError('You do not have permission to view this chat');
@@ -135,17 +181,12 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
           setIsLoading(false);
           return;
         }
-
         const data = await response.json();
         setChat(data);
-
-        // Check if data is in JSON format or old text format
         if (isJsonFormat(data.rawText)) {
-          // New JSON format - deserialize
           const messages = deserializeMessages(data.rawText);
           setParsedMessages(messages);
         } else {
-          // Old text format - parse as text
           parseChat(data.rawText, data.senderPositions);
         }
       } catch (error) {
@@ -155,7 +196,6 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
         setIsLoading(false);
       }
     };
-
     fetchSharedChat();
   }, [chatId]);
 
@@ -163,48 +203,24 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
   useEffect(() => {
     const fetchAssets = async () => {
       if (!chatId) return;
-
       try {
         const response = await fetch(`/api/assets?chatId=${chatId}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched assets:', data.assets);
           setAssets(data.assets || []);
         }
       } catch (error) {
         console.error('Error fetching assets:', error);
       }
     };
-
     fetchAssets();
   }, [chatId]);
-
-  // Debug: Log message IDs and asset message IDs
-  useEffect(() => {
-    if (parsedMessages.length > 0 && assets.length > 0) {
-      console.log(
-        'Parsed Message IDs:',
-        parsedMessages.map((m) => m.id)
-      );
-      console.log(
-        'Asset Message IDs:',
-        assets.map((a) => a.messageId)
-      );
-      console.log(
-        'Messages with assets:',
-        parsedMessages
-          .filter((msg) => assets.some((asset) => asset.messageId === msg.id))
-          .map((m) => ({ id: m.id, sender: m.sender }))
-      );
-    }
-  }, [parsedMessages, assets]);
 
   // Download asset function
   const downloadAsset = async (fileUrl: string, fileName: string) => {
     try {
       const response = await fetch(fileUrl);
       if (!response.ok) throw new Error('Failed to fetch file');
-
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -220,7 +236,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     }
   };
 
-  // Initialize comment threads hook with a temporary name
+  // Initialize comment threads hook
   const {
     threads,
     isLoading: threadsLoading,
@@ -232,53 +248,12 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     deleteComment,
   } = useCommentThreads({
     chatId: chatId,
-    userId: commentUserId,
-    userName: currentUser?.name || 'Anonymous User', // Will be updated by useMemo
+    userId: commentUserId || undefined, // Pass undefined if no ID is ready
+    userName: commentUserName,
     userAvatar: currentUser?.image,
   });
 
-  // Smart function to determine anonymous user name based on existing comments
-  const commentUserName = React.useMemo(() => {
-    // If user is authenticated, use their real name
-    if (currentUser?.name) {
-      return currentUser.name;
-    }
 
-    // If user is not authenticated, assign anonymous number for this specific chat
-    if (!currentUser && commentUserId && chatId) {
-      // Check if this user already has an assigned number for THIS chat
-      const chatAnonKey = `${chatId}_anon_number`;
-      const existingNumber = localStorage.getItem(chatAnonKey);
-
-      if (existingNumber) {
-        return `Anonymous User ${existingNumber}`;
-      }
-
-      // User doesn't have a number for this chat yet - assign one
-      // Count how many unique temp_ userIds exist in comments for this chat
-      const uniqueTempUserIds = new Set<string>();
-
-      threads.forEach((thread) => {
-        if (thread.comments) {
-          thread.comments.forEach((comment: any) => {
-            if (comment.userId && comment.userId.startsWith('temp_')) {
-              uniqueTempUserIds.add(comment.userId);
-            }
-          });
-        }
-      });
-
-      // Assign the next number based on how many temp users already exist
-      const nextNumber = uniqueTempUserIds.size + 1;
-
-      // Save this number for this chat
-      localStorage.setItem(chatAnonKey, nextNumber.toString());
-
-      return `Anonymous User ${nextNumber}`;
-    }
-
-    return 'Anonymous User';
-  }, [currentUser, commentUserId, threads, chatId]);
 
   // Sort threads by message order (based on message position in parsedMessages array)
   const sortedThreads = React.useMemo(() => {

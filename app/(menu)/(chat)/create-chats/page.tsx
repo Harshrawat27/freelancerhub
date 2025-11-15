@@ -16,12 +16,12 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { parseTextToMessages, serializeMessages } from '@/lib/message-utils';
+import { getTempUserId } from '@/lib/temp-user';
 import {
   calculateTotalWords,
   trimMessagesToLimit,
   getUserTier,
   getTierLimits,
-  getOrCreateTempUserId,
 } from '@/lib/user-tiers';
 import { WordLimitDialog, ChatLimitDialog } from '@/components/limits';
 import { useSession } from '@/lib/auth-client';
@@ -61,45 +61,7 @@ export default function CreateChats() {
   const [currentChats, setCurrentChats] = useState(0);
   const [maxChats, setMaxChats] = useState(0);
 
-  // Handle chat migration from temp user to registered user on sign-in
-  useEffect(() => {
-    const migrateChatsIfNeeded = async () => {
-      // Only proceed if user is authenticated
-      if (!session?.user?.id) return;
 
-      // Check if there's a temp user ID in localStorage
-      const tempUserId = localStorage.getItem('tempUserId');
-      if (!tempUserId || !tempUserId.startsWith('temp_')) return;
-
-      try {
-        const response = await fetch('/api/migrate-chats', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ tempUserId }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.migratedCount > 0) {
-            toast.success(
-              `Successfully migrated ${data.migratedCount} chat${
-                data.migratedCount > 1 ? 's' : ''
-              } to your account!`
-            );
-          }
-          // Remove temp user ID from localStorage after successful migration
-          localStorage.removeItem('tempUserId');
-        }
-      } catch (error) {
-        console.error('Error migrating chats:', error);
-        // Don't show error to user - fail silently to avoid confusion
-      }
-    };
-
-    migrateChatsIfNeeded();
-  }, [session?.user?.id]);
 
   const saveChat = async () => {
     if (!rawChat.trim() || parsedMessages.length === 0) {
@@ -121,7 +83,7 @@ export default function CreateChats() {
     const tierLimits = getTierLimits(userTier);
 
     // Get or create temp user ID if not authenticated
-    const tempUserId = !session?.user ? getOrCreateTempUserId() : undefined;
+    const tempUserId = !session?.user ? getTempUserId() : undefined;
 
     // Fetch current chat count
     try {

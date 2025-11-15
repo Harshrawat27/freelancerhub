@@ -122,45 +122,6 @@ export function canUploadAsset(
 }
 
 /**
- * Generate temp user ID for unregistered users
- */
-export function generateTempUserId(): string {
-  return `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-}
-
-/**
- * Check if user ID is temporary
- */
-export function isTempUserId(userId: string): boolean {
-  return userId.startsWith('temp_');
-}
-
-/**
- * Get or create temp user ID from localStorage
- */
-export function getOrCreateTempUserId(): string {
-  if (typeof window === 'undefined') return '';
-
-  const TEMP_USER_KEY = 'temp_user_id';
-  let tempId = localStorage.getItem(TEMP_USER_KEY);
-
-  if (!tempId) {
-    tempId = generateTempUserId();
-    localStorage.setItem(TEMP_USER_KEY, tempId);
-  }
-
-  return tempId;
-}
-
-/**
- * Clear temp user ID from localStorage
- */
-export function clearTempUserId(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('temp_user_id');
-}
-
-/**
  * Get user tier based on registration status
  */
 export function getUserTier(
@@ -170,3 +131,4 @@ export function getUserTier(
   if (!isRegistered) return 'UNREGISTERED';
   return dbUserTier || 'FREE';
 }
+
