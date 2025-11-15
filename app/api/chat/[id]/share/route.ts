@@ -17,20 +17,26 @@ export async function PUT(
       headers: new Headers(incomingHeaders),
     });
 
-    if (!session || !session.user || !session.user.id) {
+    const { isPublic, sharedWith, tempUserId } = body;
+
+    // Determine user ID: either from session or temp user ID
+    let userId: string;
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else if (tempUserId && tempUserId.startsWith('temp_')) {
+      userId = tempUserId;
+    } else {
       return NextResponse.json(
-        { error: 'Unauthorized or user ID missing' },
+        { error: 'Unauthorized: No valid user ID or temp user ID provided' },
         { status: 401 }
       );
     }
-
-    const { isPublic, sharedWith } = body;
 
     // Check if chat exists and belongs to user
     const existingChat = await prisma.chat.findUnique({
       where: {
         id,
-        userId: session.user.id,
+        userId,
       },
     });
 

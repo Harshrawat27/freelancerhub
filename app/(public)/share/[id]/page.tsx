@@ -92,6 +92,46 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     getUser();
   }, []);
 
+  // Generate or retrieve anonymous user ID for this browser session
+  const getAnonymousUserId = (): string => {
+    const storageKey = `anonymous-user-id-${chatId}`;
+    let anonymousId = localStorage.getItem(storageKey);
+
+    if (!anonymousId) {
+      // Generate a unique ID for this anonymous user
+      anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem(storageKey, anonymousId);
+    }
+
+    return anonymousId;
+  };
+
+  // Helper function to get anonymous user display name
+  const getAnonymousUserName = (userId: string): string => {
+    // For anonymous users (those without authentication)
+    if (!currentUser && userId) {
+      const storageKey = `anonymous-user-mapping-${chatId}`;
+      const mapping = localStorage.getItem(storageKey);
+      const userMapping: { [key: string]: number } = mapping ? JSON.parse(mapping) : {};
+
+      if (!userMapping[userId]) {
+        // Assign the next available number
+        const existingNumbers = Object.values(userMapping);
+        const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+        userMapping[userId] = nextNumber;
+        localStorage.setItem(storageKey, JSON.stringify(userMapping));
+      }
+
+      return `Anonymous User ${userMapping[userId]}`;
+    }
+
+    return 'Anonymous User';
+  };
+
+  // Determine user ID and name for comment system
+  const commentUserId = currentUser?.id || getAnonymousUserId();
+  const commentUserName = currentUser?.name || getAnonymousUserName(commentUserId);
+
   // Deselect active thread when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -228,8 +268,8 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     deleteComment,
   } = useCommentThreads({
     chatId: chatId,
-    userId: currentUser?.id || 'anonymous',
-    userName: currentUser?.name || 'Anonymous User',
+    userId: commentUserId,
+    userName: commentUserName,
     userAvatar: currentUser?.image,
   });
 
@@ -423,8 +463,7 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     startOffset: number,
     endOffset: number
   ) => {
-    if (!chat || !currentUser) {
-      alert('Please sign in to add comments');
+    if (!chat) {
       return;
     }
 
@@ -788,13 +827,13 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
               })}
             </div>
 
-            {!currentUser && (
+            {/* {!currentUser && (
               <Card className='p-4 mt-6 bg-muted/50 text-center'>
                 <p className='text-sm text-muted-foreground'>
                   Sign in to select text and add comments
                 </p>
               </Card>
-            )}
+            )} */}
           </div>
 
           {/* Comments Sidebar - Only show if there's an active thread or threads with comments */}

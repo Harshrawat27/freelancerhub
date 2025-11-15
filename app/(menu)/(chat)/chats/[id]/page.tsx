@@ -1314,6 +1314,11 @@ export default function ChatDetail({
                                       const newAccess = 'restricted';
                                       setLinkAccess(newAccess);
 
+                                      // Get temp user ID if user is not signed in
+                                      const tempUserId = !session.data?.user
+                                        ? localStorage.getItem('temp_user_id')
+                                        : null;
+
                                       // Save to database
                                       setIsSavingShare(true);
                                       try {
@@ -1331,6 +1336,7 @@ export default function ChatDetail({
                                                 sharedWith.length > 0
                                                   ? sharedWith
                                                   : null,
+                                              ...(tempUserId && { tempUserId }),
                                             }),
                                           }
                                         );
@@ -1356,6 +1362,11 @@ export default function ChatDetail({
                                       const newAccess = 'anyone';
                                       setLinkAccess(newAccess);
 
+                                      // Get temp user ID if user is not signed in
+                                      const tempUserId = !session.data?.user
+                                        ? localStorage.getItem('temp_user_id')
+                                        : null;
+
                                       // Save to database
                                       setIsSavingShare(true);
                                       try {
@@ -1373,6 +1384,7 @@ export default function ChatDetail({
                                                 sharedWith.length > 0
                                                   ? sharedWith
                                                   : null,
+                                              ...(tempUserId && { tempUserId }),
                                             }),
                                           }
                                         );
