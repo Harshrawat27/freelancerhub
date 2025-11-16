@@ -56,6 +56,7 @@ export function InlineCommentThread({
       )}
     >
       {/* Header with selected text */}
+
       <div className='flex items-start justify-between gap-2 pb-3 border-b'>
         <div className='flex-1'>
           <p className='text-xs text-muted-foreground mb-1'>Commenting on:</p>

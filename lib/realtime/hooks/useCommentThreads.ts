@@ -158,7 +158,8 @@ export function useCommentThreads({
   const createComment = async (
     threadId: string,
     content: string,
-    parentId?: string
+    parentId?: string,
+    overrideUser?: { userId: string; userName: string }
   ) => {
     try {
       // Find the thread to get messageId
@@ -167,19 +168,26 @@ export function useCommentThreads({
         throw new Error('Thread not found');
       }
 
+      const body = {
+        chatId,
+        messageId: thread.messageId,
+        threadId,
+        parentId: parentId || null,
+        content,
+        userId: overrideUser?.userId || userId,
+        userName: overrideUser?.userName || userName,
+        userAvatar: userAvatar, // userAvatar is not part of override for now
+      };
+
+      // Ensure we have a userId before sending
+      if (!body.userId) {
+        throw new Error('User ID is missing, cannot create comment.');
+      }
+
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatId,
-          messageId: thread.messageId,
-          threadId,
-          parentId: parentId || null,
-          content,
-          userId,
-          userName,
-          userAvatar,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

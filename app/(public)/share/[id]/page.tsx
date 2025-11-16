@@ -493,7 +493,25 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
 
   // Handle adding comment to thread
   const handleAddComment = async (threadId: string, content: string) => {
-    await createComment(threadId, content);
+    // Ensure anonymous user has an ID before commenting
+    if (!currentUser) {
+      const anonId = await getOrCreateAnonymousId();
+      if (!anonId) return; // Stop if ID creation failed
+
+      // Since the state update for the ID is async, we must pass the new ID
+      // and name directly to the createComment function as an override.
+      const parts = anonId.split('_');
+      const number = parts[parts.length - 1];
+      const anonName = `Anonymous User ${number}`;
+
+      await createComment(threadId, content, undefined, {
+        userId: anonId,
+        userName: anonName,
+      });
+    } else {
+      // User is logged in, no override needed
+      await createComment(threadId, content);
+    }
   };
 
   const handleEditComment = async (commentId: string, content: string) => {
