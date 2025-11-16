@@ -92,42 +92,15 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     getUser();
   }, []);
 
-  // Effect to manage anonymous commenter ID
+  // On page load, just check if an ID already exists in localStorage
   useEffect(() => {
-    if (sessionPending || currentUser) return; // Don't run if session is loading or user is logged in
-
+    if (currentUser) return;
     const anonIdKey = `anon_commenter_id_${chatId}`;
-    let anonId = localStorage.getItem(anonIdKey);
-
-    const setupAnonymousId = async () => {
-      if (anonId) {
-        setAnonymousCommenterId(anonId);
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `/api/chat/${chatId}/anonymous-commenters-count`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to get anonymous commenter count');
-        }
-        const data = await response.json();
-        const nextAnonNumber = data.count + 1;
-        const newAnonId = `${chatId}_anon_user_${nextAnonNumber}`;
-
-        localStorage.setItem(anonIdKey, newAnonId);
-        setAnonymousCommenterId(newAnonId);
-      } catch (err) {
-        console.error('Failed to setup anonymous ID:', err);
-        // Fallback to a random ID if API fails, to not block commenting
-        const fallbackId = `${chatId}_anon_user_fallback_${Date.now()}`;
-        setAnonymousCommenterId(fallbackId);
-      }
-    };
-
-    setupAnonymousId();
-  }, [chatId, sessionPending, currentUser]);
+    const existingId = localStorage.getItem(anonIdKey);
+    if (existingId) {
+      setAnonymousCommenterId(existingId);
+    }
+  }, [chatId, currentUser]);
 
   // Determine user ID for comment system
   const commentUserId = currentUser?.id || anonymousCommenterId;
@@ -252,8 +225,6 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     userName: commentUserName,
     userAvatar: currentUser?.image,
   });
-
-
 
   // Sort threads by message order (based on message position in parsedMessages array)
   const sortedThreads = React.useMemo(() => {
@@ -438,6 +409,43 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     };
   }, [calculateCommentPositions]);
 
+  /**
+   * Gets or creates an anonymous ID for the current user for this chat.
+   * This is triggered only when the user performs their first commenting action.
+   */
+  const getOrCreateAnonymousId = async (): Promise<string | null> => {
+    if (currentUser) return null; // User is logged in
+    if (anonymousCommenterId) return anonymousCommenterId; // ID already exists in state
+
+    const anonIdKey = `anon_commenter_id_${chatId}`;
+    const existingId = localStorage.getItem(anonIdKey);
+    if (existingId) {
+      setAnonymousCommenterId(existingId);
+      return existingId;
+    }
+
+    // This is the first action, so we need to generate a new ID.
+    try {
+      const response = await fetch(
+        `/api/chat/${chatId}/anonymous-commenters-count`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to get anonymous commenter count');
+      }
+      const data = await response.json();
+      const nextAnonNumber = data.count + 1;
+      const newAnonId = `${chatId}_anon_user_${nextAnonNumber}`;
+
+      localStorage.setItem(anonIdKey, newAnonId);
+      setAnonymousCommenterId(newAnonId);
+      return newAnonId;
+    } catch (err) {
+      console.error('Failed to create anonymous ID:', err);
+      toast.error('Could not comment as an anonymous user. Please try again.');
+      return null;
+    }
+  };
+
   // Handle text selection - create thread
   const handleTextSelected = async (
     messageId: string,
@@ -445,8 +453,12 @@ function SharedChatPageContent({ chatId }: { chatId: string }) {
     startOffset: number,
     endOffset: number
   ) => {
-    if (!chat) {
-      return;
+    if (!chat) return;
+
+    // Ensure anonymous user has an ID before creating a thread
+    if (!currentUser) {
+      const anonId = await getOrCreateAnonymousId();
+      if (!anonId) return; // Stop if ID creation failed
     }
 
     try {
