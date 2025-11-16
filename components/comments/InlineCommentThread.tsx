@@ -59,6 +59,11 @@ export function InlineCommentThread({
 
       <div className='flex items-start justify-between gap-2 pb-3 border-b'>
         <div className='flex-1'>
+          {!currentUserId && (
+            <p className='text-xs font-bold text-muted-foreground mb-2'>
+              <b>To edit and delete comments, you have to sign up.</b>
+            </p>
+          )}
           <p className='text-xs text-muted-foreground mb-1'>Commenting on:</p>
           <p className='text-sm italic text-foreground/80'>"{selectedText}"</p>
         </div>
