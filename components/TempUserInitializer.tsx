@@ -60,7 +60,7 @@ export function TempUserInitializer() {
       if (migrationPromises.length === 0) return;
 
       try {
-        toast.info('Checking for data to migrate to your new account...');
+        // toast.info('Checking for data to migrate to your new account...');
         const results = await Promise.all(migrationPromises);
 
         // Process migration results
@@ -78,9 +78,7 @@ export function TempUserInitializer() {
         }
 
         if (totalMigratedChats > 0) {
-          toast.success(
-            `Successfully migrated ${totalMigratedChats} chat(s)!`
-          );
+          toast.success(`Successfully migrated ${totalMigratedChats} chat(s)!`);
         }
         if (totalMigratedComments > 0) {
           toast.success(
