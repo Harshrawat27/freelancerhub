@@ -24,8 +24,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Sparkles, Crown } from 'lucide-react';
 import Image from 'next/image';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
 
 // Dummy data
 const dummyProjects = [
@@ -608,7 +609,40 @@ export function Sidebar() {
             </div>
           </div>
         ) : (
-          <div className='px-2 pb-2 bg-secondary'>
+          <div className='px-2 pb-2 bg-secondary space-y-2'>
+            {/* Upgrade Button for Free Users / Pro Badge for Pro Users */}
+            {(session.data?.user as any)?.userTier === 'FREE' ? (
+              <UpgradeDialog>
+                <button
+                  className={cn(
+                    'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg',
+                    'bg-gradient-to-r from-primary to-primary/80',
+                    'text-primary-foreground',
+                    'hover:from-primary/90 hover:to-primary/70',
+                    'transition-all duration-200',
+                    'font-semibold text-sm',
+                    'shadow-lg shadow-primary/25'
+                  )}
+                >
+                  <Sparkles className='w-4 h-4' />
+                  Upgrade to Pro
+                </button>
+              </UpgradeDialog>
+            ) : (
+              <div
+                className={cn(
+                  'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg',
+                  'bg-gradient-to-r from-amber-500 to-amber-600',
+                  'text-white',
+                  'font-semibold text-sm',
+                  'shadow-lg shadow-amber-500/25'
+                )}
+              >
+                <Crown className='w-4 h-4' />
+                Pro User
+              </div>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger className='flex items-center gap-3 px-3 py-2 rounded-lg bg-background w-full cursor-pointer hover:opacity-80 transition-opacity'>
                 {/* User Avatar */}
