@@ -21,12 +21,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Sparkles, Crown } from 'lucide-react';
 import Image from 'next/image';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
+// import { useState } from 'react';
 
 export function Sidebar() {
   const pathname = usePathname();
   const session = useSession();
+  // console.log('Session user:', session.data?.user);
 
   // Get user initials from name
   const getUserInitials = (name: string) => {
@@ -282,6 +285,42 @@ export function Sidebar() {
                   <LogOut className='w-4 h-4 mr-2' />
                   <span>Logout</span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {(session.data?.user as any)?.userTier === 'PRO' ? (
+                  <div className='px-2 py-1.5'>
+                    <div
+                      className={cn(
+                        'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
+                        'bg-gradient-to-r from-amber-500 to-amber-600',
+                        'text-white',
+                        'font-semibold text-sm',
+                        'shadow-lg shadow-amber-500/25'
+                      )}
+                    >
+                      <Crown className='w-4 h-4' />
+                      Pro User
+                    </div>
+                  </div>
+                ) : (
+                  <UpgradeDialog>
+                    <div className='px-2 py-1.5'>
+                      <button
+                        className={cn(
+                          'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
+                          'bg-gradient-to-r from-primary to-primary/80',
+                          'text-primary-foreground',
+                          'hover:from-primary/90 hover:to-primary/70',
+                          'transition-all duration-200',
+                          'font-semibold text-sm',
+                          'shadow-lg shadow-primary/25'
+                        )}
+                      >
+                        <Sparkles className='w-4 h-4' />
+                        Upgrade to Pro
+                      </button>
+                    </div>
+                  </UpgradeDialog>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
