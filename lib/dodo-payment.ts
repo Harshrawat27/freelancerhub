@@ -2,7 +2,9 @@ import DodoPayments from 'dodopayments';
 
 const client = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  environment: process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode' || 'test_mode',
+  environment:
+    (process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode') ||
+    'test_mode',
   webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET,
 });
 
