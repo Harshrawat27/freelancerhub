@@ -14,7 +14,7 @@ export function LiveblocksRoomProvider({
   children,
 }: LiveblocksRoomProviderProps) {
   // Auth endpoint function to pass tempUserId for unauthenticated users
-  const authEndpoint = async (room: string) => {
+  const authEndpoint = async (room?: string) => {
     // Get temp user ID for unauthenticated users
     const tempUserId = getTempUserId();
 
