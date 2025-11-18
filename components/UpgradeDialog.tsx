@@ -120,7 +120,7 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
               'hover:bg-primary/90',
               'transition-colors duration-200',
               'font-semibold text-base',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
+              'disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
             )}
           >
             {isLoading ? (

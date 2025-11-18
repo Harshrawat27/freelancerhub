@@ -20,9 +20,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ChatShare - Transform Chats into Actionable Insights',
+  title: 'ChatShare - Share chat hide what matters',
   description:
-    'Copy, paste, and transform your chats. Hide sensitive info, create tasks, summaries, and action plans for your team.',
+    'Turn messy chats into structured insights. Hide what matters, extract tasks, create summaries, and share with your team.',
 };
 
 export default function RootLayout({

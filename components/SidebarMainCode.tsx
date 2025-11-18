@@ -87,6 +87,25 @@ export function Sidebar() {
   };
 
   return (
+    <>
+      <style jsx>{`
+        @keyframes subtle-shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-2px);
+          }
+          75% {
+            transform: translateX(2px);
+          }
+        }
+        .promo-shake {
+          animation: subtle-shake 0.3s ease-in-out;
+          animation-iteration-count: 2;
+        }
+      `}</style>
     <aside
       className={cn(
         'fixed top-2.5 left-2.5',
@@ -535,7 +554,42 @@ export function Sidebar() {
             <LoginSkeleton />
           </div>
         ) : !session.data ? (
-          <div className='px-2 mb-2'>
+          <div className='px-2 mb-2 space-y-2'>
+            {/* Launch Offer Promo Box */}
+            <div
+              className='promo-shake rounded-lg bg-primary/10 dark:bg-primary/20 p-3 border border-primary/30'
+              onAnimationEnd={(e) => {
+                e.currentTarget.classList.remove('promo-shake');
+                setTimeout(() => {
+                  e.currentTarget.classList.add('promo-shake');
+                }, 5000);
+              }}
+            >
+              <div className='flex items-center gap-2 mb-2'>
+                <Sparkles className='w-4 h-4 text-primary' />
+                <h3 className='font-semibold text-sm text-foreground'>
+                  Launch Offer!
+                </h3>
+              </div>
+              <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
+                Get our premium features for just{' '}
+                <span className='font-bold text-primary'>$20 for the entire first year</span>,
+                then only $5/month after that!
+              </p>
+              <UpgradeDialog>
+                <button
+                  className={cn(
+                    'w-full px-3 py-2 rounded-lg text-sm font-medium',
+                    'bg-primary text-primary-foreground',
+                    'hover:bg-primary/90',
+                    'transition-colors duration-200',
+                    'shadow-md shadow-primary/20'
+                  )}
+                >
+                  Claim Offer
+                </button>
+              </UpgradeDialog>
+            </div>
             <div className='px-3 py-3 bg-background rounded-lg'>
               <h2 className='text-black text-xl font-heading mb-1 dark:text-white'>
                 Login
@@ -610,6 +664,46 @@ export function Sidebar() {
           </div>
         ) : (
           <div className='px-2 pb-2 bg-secondary space-y-2'>
+            {/* Launch Offer Promo Box - Only for FREE users */}
+            {(session.data?.user as any)?.userTier === 'FREE' && (
+              <div
+                className='promo-shake rounded-lg bg-primary/10 dark:bg-primary/20 p-3 border border-primary/30'
+                onAnimationEnd={(e) => {
+                  e.currentTarget.classList.remove('promo-shake');
+                  setTimeout(() => {
+                    e.currentTarget.classList.add('promo-shake');
+                  }, 5000);
+                }}
+              >
+                <div className='flex items-center gap-2 mb-2'>
+                  <Sparkles className='w-4 h-4 text-primary' />
+                  <h3 className='font-semibold text-sm text-foreground'>
+                    Launch Offer!
+                  </h3>
+                </div>
+                <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
+                  Get our premium features for just{' '}
+                  <span className='font-bold text-primary'>
+                    $20 for the entire first year
+                  </span>
+                  , then only $5/month after that!
+                </p>
+                <UpgradeDialog>
+                  <button
+                    className={cn(
+                      'w-full px-3 py-2 rounded-lg text-sm font-medium',
+                      'bg-primary text-primary-foreground',
+                      'hover:bg-primary/90',
+                      'transition-colors duration-200',
+                      'shadow-md shadow-primary/20'
+                    )}
+                  >
+                    Claim Offer
+                  </button>
+                </UpgradeDialog>
+              </div>
+            )}
+
             {/* Upgrade Button for Free Users / Pro Badge for Pro Users */}
             {(session.data?.user as any)?.userTier === 'FREE' ? (
               <UpgradeDialog>
@@ -695,5 +789,6 @@ export function Sidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }
