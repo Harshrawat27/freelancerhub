@@ -51,7 +51,7 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
       description: 'Create and share unlimited chat conversations',
     },
     {
-      title: 'Unlimited Storage',
+      title: '50GB storage',
       description: 'Upload and store unlimited files and assets',
     },
     {
@@ -59,16 +59,8 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
       description: 'Get faster response times for support requests',
     },
     {
-      title: 'Advanced Features',
-      description: 'Access to all premium features and future updates',
-    },
-    {
       title: 'Team Collaboration',
       description: 'Invite unlimited team members to collaborate',
-    },
-    {
-      title: 'Export Options',
-      description: 'Export your data in multiple formats',
     },
   ];
 
@@ -77,8 +69,8 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className='max-w-2xl'>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2 text-2xl'>
-            <Sparkles className='w-6 h-6 text-primary' />
+          <DialogTitle className='flex items-center gap-2 text-2xl justify-center'>
+            <Sparkles className='w-6 h-6 text-primary text-center' />
             Upgrade to Pro
           </DialogTitle>
           <DialogDescription>
@@ -88,13 +80,13 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
 
         <div className='mt-6 space-y-6'>
           {/* Pricing */}
-          <div className='bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-6 border border-primary/20'>
+          <div className='bg-linear-to-br from-primary/10 to-primary/5 rounded-lg p-6 border border-primary/20'>
             <div className='flex items-baseline gap-2'>
               <span className='text-4xl font-bold text-foreground'>$20</span>
-              <span className='text-muted-foreground'>/year</span>
+              <span className='text-muted-foreground'>for 1st year</span>
             </div>
             <p className='text-sm text-muted-foreground mt-1'>
-              One-time payment for annual access
+              After that $5/month
             </p>
           </div>
 
@@ -104,7 +96,7 @@ export function UpgradeDialog({ children }: UpgradeDialogProps) {
             <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
               {benefits.map((benefit, index) => (
                 <div key={index} className='flex gap-3'>
-                  <div className='flex-shrink-0 mt-0.5'>
+                  <div className='shrink-0 mt-0.5'>
                     <Check className='w-5 h-5 text-primary' />
                   </div>
                   <div>

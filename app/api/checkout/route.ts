@@ -22,12 +22,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    const session = await createCheckoutSession(
+    const checkoutSession = await createCheckoutSession(
       productId,
       user.email!,
-      user.id
+      user.id,
+      user.name || undefined
     );
-    return NextResponse.json({ url: session.checkout_url });
+    return NextResponse.json({ url: checkoutSession.checkout_url });
   } catch (error) {
     console.error("Error creating checkout session:", error);
     return new NextResponse("Internal Server Error", { status: 500 });

@@ -11,17 +11,21 @@ const client = new DodoPayments({
 export const createCheckoutSession = async (
   productId: string,
   userEmail: string,
-  userId: string
+  userId: string,
+  userName?: string
 ) => {
   const checkoutSession = await client.checkoutSessions.create({
     product_cart: [{ product_id: productId, quantity: 1 }],
     customer: {
       email: userEmail,
+      ...(userName && { name: userName }),
     },
     metadata: {
       userId: userId,
     },
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=success`,
+    ...(process.env.NEXT_PUBLIC_APP_URL && {
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=success`,
+    }),
   });
 
   return checkoutSession;
