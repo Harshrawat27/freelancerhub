@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth-client';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
 
 interface WordLimitDialogProps {
   open: boolean;
@@ -53,7 +54,7 @@ export function WordLimitDialog({
         <div className='flex flex-col gap-4 py-4'>
           <div className='flex items-center justify-between rounded-lg border p-4'>
             <div>
-              <p className='text-sm font-medium'>Current words</p>
+              <p className='text-sm font-medium'>Trimmed words</p>
               <p className='text-2xl font-bold'>
                 {currentWords.toLocaleString()}
               </p>
@@ -77,7 +78,7 @@ export function WordLimitDialog({
               </ul>
             </div>
           ) : (
-            <div className='rounded-lg bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 p-4 border border-purple-200 dark:border-purple-800'>
+            <div className='rounded-lg bg-linear-to-br from-[#ee575a]/10 to-[#ee575a]/20 dark:from-[#ee575a]/20 dark:to-[#ee575a]/30 p-4 border border-[#ee575a]/40 dark:border-[#ee575a]/50'>
               <h4 className='font-semibold mb-2'>Upgrade to Pro</h4>
               <ul className='space-y-1 text-sm'>
                 <li>✨ Unlimited words per chat</li>
@@ -103,9 +104,9 @@ export function WordLimitDialog({
               Sign up with Google
             </Button>
           ) : (
-            <Button onClick={onUpgrade} className='w-full'>
-              Upgrade to Pro
-            </Button>
+            <UpgradeDialog>
+              <Button className='w-full'>Upgrade to Pro</Button>
+            </UpgradeDialog>
           )}
         </DialogFooter>
       </DialogContent>

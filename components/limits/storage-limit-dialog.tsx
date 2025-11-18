@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { formatStorageSize } from '@/lib/user-tiers';
 import { authClient } from '@/lib/auth-client';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
 
 interface StorageLimitDialogProps {
   open: boolean;
@@ -88,7 +89,7 @@ export function StorageLimitDialog({
               </ul>
             </div>
           ) : (
-            <div className='rounded-lg bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 p-4 border border-purple-200 dark:border-purple-800'>
+            <div className='rounded-lg bg-linear-to-br from-[#ee575a]/10 to-[#ee575a]/20 dark:from-[#ee575a]/20 dark:to-[#ee575a]/30 p-4 border border-[#ee575a]/40 dark:border-[#ee575a]/50'>
               <h4 className='font-semibold mb-2'>Upgrade to Pro</h4>
               <ul className='space-y-1 text-sm'>
                 <li>✨ 50GB storage for assets</li>
@@ -114,9 +115,9 @@ export function StorageLimitDialog({
               Sign up with Google
             </Button>
           ) : (
-            <Button onClick={onUpgrade} className='w-full'>
-              Upgrade to Pro
-            </Button>
+            <UpgradeDialog>
+              <Button className='w-full'>Upgrade to Pro</Button>
+            </UpgradeDialog>
           )}
         </DialogFooter>
       </DialogContent>
