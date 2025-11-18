@@ -24,7 +24,7 @@ export const createCheckoutSession = async (
       userId: userId,
     },
     ...(process.env.NEXT_PUBLIC_APP_URL && {
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment=success`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/create-chats?payment=success`,
     }),
   });
 
