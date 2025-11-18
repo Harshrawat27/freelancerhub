@@ -23,6 +23,28 @@ export const metadata: Metadata = {
   title: 'ChatShare - Share chat hide what matters',
   description:
     'Turn messy chats into structured insights. Hide what matters, extract tasks, create summaries, and share with your team.',
+  openGraph: {
+    title: 'ChatShare - Share chat hide what matters',
+    description:
+      'Turn messy chats into structured insights. Hide what matters, extract tasks, create summaries, and share with your team.',
+    images: [
+      {
+        url: '/open-graph.png',
+        width: 1200,
+        height: 630,
+        alt: 'ChatShare - Share chat hide what matters',
+      },
+    ],
+    type: 'website',
+    siteName: 'ChatShare',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ChatShare - Share chat hide what matters',
+    description:
+      'Turn messy chats into structured insights. Hide what matters, extract tasks, create summaries, and share with your team.',
+    images: ['/open-graph.png'],
+  },
 };
 
 export default function RootLayout({
