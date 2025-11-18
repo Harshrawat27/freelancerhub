@@ -65,7 +65,7 @@ export default function Home() {
                     'transition-colors duration-200 cursor-pointer'
                   )}
                 >
-                  Get Started
+                  Create Chat
                 </button>
               </Link>
             </div>
@@ -152,30 +152,49 @@ export default function Home() {
             collaboration.
           </p>
           <div className='flex flex-col sm:flex-row gap-3 justify-center items-center'>
-            <button
-              className={cn(
-                'w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium',
-                'bg-primary text-primary-foreground',
-                'shadow-md shadow-primary/20 button-highlighted-shadow',
-                'hover:bg-primary/90',
-                'transition-colors duration-200 cursor-pointer'
-              )}
-            >
-              Start Free Trial
-            </button>
-            <button
-              className={cn(
-                'w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium',
-                'bg-secondary text-secondary-foreground',
-                'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
-                'hover:bg-secondary/80',
-                'transition-colors duration-200 cursor-pointer'
-              )}
-            >
-              Learn More
-            </button>
+            <Link href='/signup'>
+              <button
+                className={cn(
+                  'w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium',
+                  'bg-primary text-primary-foreground',
+                  'shadow-md shadow-primary/20 button-highlighted-shadow',
+                  'hover:bg-primary/90',
+                  'transition-colors duration-200 cursor-pointer'
+                )}
+              >
+                Start Free Trial
+              </button>
+            </Link>
+            <Link href='/create-chats'>
+              <button
+                className={cn(
+                  'w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm font-medium',
+                  'bg-secondary text-secondary-foreground',
+                  'shadow-[4px_4px_8px_rgba(0,0,0,0.4),-4px_-4px_8px_rgba(255,255,255,0.02)]',
+                  'hover:bg-secondary/80',
+                  'transition-colors duration-200 cursor-pointer'
+                )}
+              >
+                Create Chat
+              </button>
+            </Link>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className='border-t border-dashed border-border px-4 md:px-8 py-6 text-center'>
+          <p className='text-xs text-muted-foreground mb-2'>
+            © {new Date().getFullYear()} ChatShare. All rights reserved.
+          </p>
+          <div className='flex justify-center gap-4 text-xs'>
+            <Link
+              href='/privacy-policy'
+              className='text-muted-foreground hover:text-primary transition-colors'
+            >
+              Privacy Policy
+            </Link>
+          </div>
+        </footer>
       </div>
     </div>
   );
