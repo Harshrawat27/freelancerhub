@@ -275,7 +275,7 @@ export function Sidebar() {
                     await authClient.signOut({
                       fetchOptions: {
                         onSuccess: () => {
-                          window.location.href = '/';
+                          window.location.href = '/create-chats';
                         },
                       },
                     });
