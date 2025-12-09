@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
 import { Analytics } from '@vercel/analytics/next';
 import { TempUserInitializer } from '@/components/TempUserInitializer';
-import { MobileBlocker } from '@/components/MobileBlocker';
 
 const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
@@ -67,7 +66,6 @@ export default function RootLayout({
           attribute='class'
           enableSystem={false}
         >
-          <MobileBlocker />
           <TempUserInitializer />
           <Toaster />
 
