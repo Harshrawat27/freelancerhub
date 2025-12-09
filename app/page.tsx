@@ -1,6 +1,7 @@
 'use client';
 
 import { ThemeToggle } from '../components/ThemeToggle';
+import { VideoModal } from '../components/VideoModal';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -55,19 +56,22 @@ export default function Home() {
                 Turn messy chats into structured insights. Hide what matters,
                 extract tasks, create summaries, and share with your team.
               </p>
-              <Link href='/create-chats'>
-                <button
-                  className={cn(
-                    'px-6 py-2.5 rounded-lg text-sm font-medium',
-                    'bg-primary text-primary-foreground',
-                    'shadow-md shadow-primary/20 button-highlighted-shadow',
-                    'hover:bg-primary/90',
-                    'transition-colors duration-200 cursor-pointer'
-                  )}
-                >
-                  Create Chat
-                </button>
-              </Link>
+              <div className='flex flex-col sm:flex-row gap-3 justify-center items-center'>
+                <Link href='/create-chats'>
+                  <button
+                    className={cn(
+                      'px-6 py-2.5 rounded-lg text-sm font-medium',
+                      'bg-primary text-primary-foreground',
+                      'shadow-md shadow-primary/20 button-highlighted-shadow',
+                      'hover:bg-primary/90',
+                      'transition-colors duration-200 cursor-pointer'
+                    )}
+                  >
+                    Create Chat
+                  </button>
+                </Link>
+                <VideoModal />
+              </div>
             </div>
           </div>
 
