@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+    // Or remove specific ones: removeConsole: { exclude: ["error"] }
+  },
   serverExternalPackages: ['@prisma/client', '@prisma/engines'],
   outputFileTracingIncludes: {
     '/api/**/*': [
