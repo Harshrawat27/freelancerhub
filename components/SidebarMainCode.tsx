@@ -555,7 +555,7 @@ export function Sidebar() {
             </div>
           ) : !session.data ? (
             <div className='px-2 mb-2 space-y-2'>
-              {/* Launch Offer Promo Box */}
+              {/* Year-End offer! Promo Box */}
               <div
                 className='promo-shake rounded-lg bg-primary/10 dark:bg-primary/20 p-3 border border-primary/30'
                 onAnimationEnd={(e) => {
@@ -568,7 +568,7 @@ export function Sidebar() {
                 <div className='flex items-center gap-2 mb-2'>
                   <Sparkles className='w-4 h-4 text-primary' />
                   <h3 className='font-semibold text-sm text-foreground'>
-                    Launch Offer!
+                    Year-End offer!!
                   </h3>
                 </div>
                 <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
@@ -666,7 +666,7 @@ export function Sidebar() {
             </div>
           ) : (
             <div className='px-2 pb-2 bg-secondary space-y-2'>
-              {/* Launch Offer Promo Box - Only for FREE users */}
+              {/* Year-End offer! Promo Box - Only for FREE users */}
               {(session.data?.user as any)?.userTier === 'FREE' && (
                 <div
                   className='promo-shake rounded-lg bg-primary/10 dark:bg-primary/20 p-3 border border-primary/30'
@@ -680,7 +680,7 @@ export function Sidebar() {
                   <div className='flex items-center gap-2 mb-2'>
                     <Sparkles className='w-4 h-4 text-primary' />
                     <h3 className='font-semibold text-sm text-foreground'>
-                      Launch Offer!
+                      Year-End offer!!
                     </h3>
                   </div>
                   <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
