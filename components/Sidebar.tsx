@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronsUpDown, LogOut, Sparkles, Crown, Clock } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Sparkles, Crown, Clock, Info } from 'lucide-react';
 import Image from 'next/image';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { useState, useEffect } from 'react';
@@ -328,6 +328,94 @@ export function Sidebar() {
                   </DialogContent>
                 </Dialog>
               </div>
+
+              {/* Features We Are Planning to Add */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className='rounded-lg bg-blue-50 dark:bg-blue-950/30 p-3 border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors'>
+                    <div className='flex items-center gap-2 mb-2'>
+                      <Info className='w-4 h-4 text-blue-600 dark:text-blue-400' />
+                      <h3 className='font-semibold text-sm text-foreground'>
+                        Features We Are Planning to Add
+                      </h3>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      Click to see upcoming features
+                    </p>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className='max-w-md'>
+                  <DialogHeader>
+                    <DialogTitle>Features We Are Planning to Add</DialogTitle>
+                    <DialogDescription>
+                      Exciting new features coming soon to enhance your experience
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className='space-y-4 py-2'>
+                    <div className='bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg p-3 border border-primary/20'>
+                      <p className='text-xs text-foreground font-medium leading-relaxed'>
+                        ✨ Simply upload your chat conversations with clients, and we'll automatically generate:
+                      </p>
+                    </div>
+                    <div className='space-y-3'>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Create and track invoices
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Generate invoices automatically from your client chats
+                          </p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Create contracts
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Professional contracts created from chat discussions
+                          </p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Project management
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Organize projects and tasks extracted from your chats
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className='pt-3 border-t border-border'>
+                      <p className='text-xs text-muted-foreground leading-relaxed mb-2'>
+                        We are planning to add these features in the next{' '}
+                        <span className='font-semibold text-foreground'>6-8 months</span>.
+                        After that, our monthly pricing will increase to{' '}
+                        <span className='font-semibold text-primary'>$10/month</span>.
+                      </p>
+                      <p className='text-xs text-muted-foreground leading-relaxed mb-2'>
+                        With our current{' '}
+                        <span className='font-semibold text-primary'>year-end offer of $20 for the entire year</span>,
+                        you will get access to these premium features for{' '}
+                        <span className='font-semibold text-foreground'>4-6 months included</span>{' '}
+                        in your subscription.
+                      </p>
+                      <p className='text-xs text-muted-foreground leading-relaxed'>
+                        Plus, if you purchase during this sale, you will also receive{' '}
+                        <span className='font-semibold text-foreground'>special benefits on monthly pricing</span>{' '}
+                        starting next year!
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <div className='px-3 py-3 bg-background rounded-lg'>
                 <h2 className='text-black text-xl font-heading mb-1 dark:text-white'>
                   Login
@@ -454,6 +542,94 @@ export function Sidebar() {
                   </UpgradeDialog>
                 </div>
               )}
+
+              {/* Features We Are Planning to Add */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className='rounded-lg bg-blue-50 dark:bg-blue-950/30 p-3 border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors'>
+                    <div className='flex items-center gap-2 mb-2'>
+                      <Info className='w-4 h-4 text-blue-600 dark:text-blue-400' />
+                      <h3 className='font-semibold text-sm text-foreground'>
+                        Features We Are Planning to Add
+                      </h3>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      Click to see upcoming features
+                    </p>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className='max-w-md'>
+                  <DialogHeader>
+                    <DialogTitle>Features We Are Planning to Add</DialogTitle>
+                    <DialogDescription>
+                      Exciting new features coming soon to enhance your experience
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className='space-y-4 py-2'>
+                    <div className='bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg p-3 border border-primary/20'>
+                      <p className='text-xs text-foreground font-medium leading-relaxed'>
+                        ✨ Simply upload your chat conversations with clients, and we'll automatically generate:
+                      </p>
+                    </div>
+                    <div className='space-y-3'>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Create and track invoices
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Generate invoices automatically from your client chats
+                          </p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Create contracts
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Professional contracts created from chat discussions
+                          </p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0' />
+                        <div>
+                          <p className='text-sm font-medium text-foreground'>
+                            Project management
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Organize projects and tasks extracted from your chats
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className='pt-3 border-t border-border'>
+                      <p className='text-xs text-muted-foreground leading-relaxed mb-2'>
+                        We are planning to add these features in the next{' '}
+                        <span className='font-semibold text-foreground'>6-8 months</span>.
+                        After that, our monthly pricing will increase to{' '}
+                        <span className='font-semibold text-primary'>$10/month</span>.
+                      </p>
+                      <p className='text-xs text-muted-foreground leading-relaxed mb-2'>
+                        With our current{' '}
+                        <span className='font-semibold text-primary'>year-end offer of $20 for the entire year</span>,
+                        you will get access to these premium features for{' '}
+                        <span className='font-semibold text-foreground'>4-6 months included</span>{' '}
+                        in your subscription.
+                      </p>
+                      <p className='text-xs text-muted-foreground leading-relaxed'>
+                        Plus, if you purchase during this sale, you will also receive{' '}
+                        <span className='font-semibold text-foreground'>special benefits on monthly pricing</span>{' '}
+                        starting next year!
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <DropdownMenu>
                 <DropdownMenuTrigger className='flex items-center gap-3 px-3 py-2 rounded-lg bg-background w-full cursor-pointer hover:opacity-80 transition-opacity'>
                   {/* User Avatar */}
