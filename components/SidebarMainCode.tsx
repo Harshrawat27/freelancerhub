@@ -568,7 +568,7 @@ export function Sidebar() {
                 <div className='flex items-center gap-2 mb-2'>
                   <Sparkles className='w-4 h-4 text-primary' />
                   <h3 className='font-semibold text-sm text-foreground'>
-                    Launch Offer!
+                    Year-End offer!
                   </h3>
                 </div>
                 <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
@@ -680,7 +680,7 @@ export function Sidebar() {
                   <div className='flex items-center gap-2 mb-2'>
                     <Sparkles className='w-4 h-4 text-primary' />
                     <h3 className='font-semibold text-sm text-foreground'>
-                      Launch Offer!
+                      Year-End offer!
                     </h3>
                   </div>
                   <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>

@@ -13,480 +13,466 @@ interface InvoicePDFProps {
   data: InvoiceFormData;
 }
 
+// "Pro Compact" Design System
+// - Base font size: 9pt
+// - Headers: 8pt uppercase, tracking 1px
+// - Primary Color: User defined or Black
+// - Layout: Horizontal emphasis to reduce vertical scroll/pages
+
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
-    fontSize: 10,
+    fontSize: 9,
+    lineHeight: 1.4,
     backgroundColor: '#ffffff',
+    padding: '30 35', // Compact margins
+    color: '#1a1a1a',
   },
-  header: {
-    backgroundColor: '#ee575a',
-    color: '#ffffff',
-    padding: 40,
-  },
-  headerContent: {
+  
+  // Header: Logo + Business Info
+  headerSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 20,
   },
-  companyName: {
-    fontSize: 24,
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 8,
+  logoContainer: {
+    width: 60,
+    height: 60,
+    marginRight: 15,
+    justifyContent: 'center',
   },
-  companyInfo: {
-    fontSize: 11,
-    opacity: 0.95,
-    marginBottom: 3,
+  logo: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
   },
-  invoiceAmount: {
-    textAlign: 'right',
-  },
-  amountLabel: {
-    fontSize: 11,
-    opacity: 0.9,
-    marginBottom: 6,
-  },
-  amountValue: {
-    fontSize: 28,
-    fontFamily: 'Helvetica-Bold',
-  },
-  body: {
-    padding: 40,
-  },
-  billingSection: {
-    flexDirection: 'row',
-    gap: 40,
-    marginBottom: 32,
-  },
-  billingBlock: {
+  businessColumn: {
     flex: 1,
+    justifyContent: 'center',
   },
-  sectionTitle: {
-    fontSize: 10,
+  businessName: {
+    fontSize: 16,
     fontFamily: 'Helvetica-Bold',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  billingName: {
-    fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    marginBottom: 2,
     color: '#111827',
-    marginBottom: 6,
   },
-  billingText: {
-    fontSize: 11,
-    color: '#374151',
-    lineHeight: 1.4,
-    marginBottom: 3,
+  headerLabel: {
+    fontSize: 30,
+    fontFamily: 'Helvetica-Bold',
+    color: '#f3f4f6', // Subtle watermark effect
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+    position: 'absolute',
+    right: 0,
+    top: -5,
   },
-  metaGrid: {
+
+  // The "Meta Bar" - High value info in a horizontal strip
+  metaBar: {
     flexDirection: 'row',
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 28,
-    gap: 15,
+    backgroundColor: '#f8fafc',
+    padding: '12 15',
+    borderRadius: 6,
+    marginBottom: 25,
+    borderLeftWidth: 4, // Accent color applied dynamically
   },
-  metaItem: {
+  metaGroup: {
     flex: 1,
   },
   metaLabel: {
-    fontSize: 9,
-    color: '#6b7280',
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginBottom: 4,
+    marginBottom: 2,
+    letterSpacing: 0.5,
   },
   metaValue: {
-    fontSize: 11,
-    color: '#1f2937',
+    fontSize: 10,
     fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
   },
-  notesSection: {
-    padding: 16,
-    marginBottom: 28,
-    borderRadius: 8,
-    borderLeft: '3px solid #ee575a',
-    backgroundColor: 'rgba(238, 87, 90, 0.08)',
+
+  // Addresses Grid
+  addressGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 25,
+    gap: 40,
   },
-  notesTitle: {
+  addressCol: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 2,
+  },
+  clientName: {
     fontSize: 11,
-    color: '#6b7280',
-    marginBottom: 6,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    marginBottom: 2,
   },
-  notesText: {
-    fontSize: 13,
-    color: '#1f2937',
+  addressText: {
+    fontSize: 9,
+    color: '#475569',
   },
-  table: {
-    marginBottom: 28,
+
+  // Compact Table
+  tableContainer: {
+    marginBottom: 20,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f9fafb',
-    padding: '10 12',
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    marginBottom: 6,
   },
-  tableHeaderText: {
-    fontSize: 9,
+  th: {
+    fontSize: 8,
     fontFamily: 'Helvetica-Bold',
-    color: '#6b7280',
+    color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   tableRow: {
     flexDirection: 'row',
-    borderTop: '1px solid #e5e7eb',
-    padding: '16 12',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8fafc',
+    alignItems: 'flex-start',
   },
-  itemDetail: {
-    flex: 3,
-  },
+  // Column Widths
+  colDesc: { flex: 4, paddingRight: 10 },
+  colQty: { width: 50, textAlign: 'center' },
+  colRate: { width: 80, textAlign: 'right' },
+  colTotal: { width: 80, textAlign: 'right' },
+
   itemName: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 3,
-    color: '#111827',
+    color: '#1e293b',
   },
-  itemDescription: {
-    fontSize: 10,
-    color: '#6b7280',
+  itemDesc: {
+    fontSize: 8,
+    color: '#64748b',
+    marginTop: 2,
   },
-  tableCell: {
-    fontSize: 11,
-    color: '#1f2937',
+  cellText: {
+    fontSize: 9,
+    color: '#334155',
   },
-  tableCellQty: {
-    flex: 0.6,
-    textAlign: 'center',
-  },
-  tableCellRate: {
-    flex: 1,
-    textAlign: 'right',
-  },
-  tableCellAmount: {
-    flex: 1,
-    textAlign: 'right',
-  },
-  totalsSection: {
+
+  // Bottom Section: Notes (Left) + Totals (Right)
+  bottomSection: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 32,
-  },
-  totalsContent: {
-    width: 240,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    fontSize: 11,
-  },
-  totalRowSubtotal: {
-    borderBottom: '1px solid #e5e7eb',
-    paddingBottom: 10,
-    marginBottom: 10,
-  },
-  totalRowGrand: {
-    borderTop: '2px solid #ee575a',
-    paddingTop: 10,
+    alignItems: 'flex-start',
     marginTop: 10,
-    fontSize: 14,
+    paddingTop: 10,
+    borderTopWidth: 2,
+    borderTopColor: '#f8fafc',
+  },
+  notesArea: {
+    flex: 2,
+    paddingRight: 40,
+  },
+  totalsArea: {
+    flex: 1,
+  },
+  
+  noteTitle: {
+    fontSize: 8,
     fontFamily: 'Helvetica-Bold',
-    color: '#ee575a',
+    color: '#64748b',
+    marginBottom: 4,
   },
-  footer: {
-    borderTop: '2px solid #f3f4f6',
-    padding: '24 40',
-    backgroundColor: '#fafafa',
-  },
-  footerCenter: {
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  footerTitle: {
-    color: '#ee575a',
-    marginBottom: 6,
-    fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
-  },
-  footerText: {
-    color: '#6b7280',
-    fontSize: 11,
-  },
-  termsSection: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTop: '1px solid #e5e7eb',
-  },
-  termsTitle: {
-    fontSize: 11,
-    marginBottom: 6,
-    color: '#374151',
-    fontFamily: 'Helvetica-Bold',
-  },
-  termsText: {
-    fontSize: 10,
-    color: '#6b7280',
+  noteText: {
+    fontSize: 8,
+    color: '#475569',
+    marginBottom: 8,
     lineHeight: 1.4,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 12,
-    objectFit: 'contain',
-  },
-  signature: {
-    width: 120,
-    height: 40,
-    marginTop: 12,
-    objectFit: 'contain',
-  },
-  customField: {
+
+  // Totals Rows
+  summaryRow: {
     flexDirection: 'row',
-    marginBottom: 3,
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
-  customFieldLabel: {
+  summaryLabel: {
+    fontSize: 9,
+    color: '#64748b',
+  },
+  summaryValue: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1e293b',
+  },
+  grandTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  grandTotalLabel: {
     fontSize: 10,
-    color: '#6b7280',
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  grandTotalValue: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+  },
+
+  // Footer / Signature
+  footer: {
+    marginTop: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  signatureBox: {
+    alignItems: 'flex-start',
+  },
+  signatureImg: {
+    height: 35,
     width: 100,
+    objectFit: 'contain',
+    marginBottom: 2,
   },
-  customFieldValue: {
-    fontSize: 10,
-    color: '#374151',
+  signatureLine: {
+    width: 120,
+    borderTopWidth: 1,
+    borderTopColor: '#cbd5e1',
+    paddingTop: 4,
+  },
+  sigText: {
+    fontSize: 7,
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+  },
+  thankYouMsg: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#cbd5e1',
+  },
+
+  // Custom Fields specific styling
+  cfRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  cfLabel: {
+    fontSize: 9,
+    color: '#64748b',
+    width: 65,
+  },
+  cfValue: {
+    fontSize: 9,
+    color: '#334155',
     flex: 1,
   },
 });
 
 export default function InvoicePDF({ data }: InvoicePDFProps) {
   const currencySymbol = getCurrencySymbol(data.currency);
-  const themeColor = data.themeColor || '#ee575a';
+  const themeColor = data.themeColor || '#111827'; // Default to dark/black if undefined
 
   return (
     <Document
       title={`Invoice-${data.invoiceNumber}`}
       author={data.businessName}
-      creator={data.businessName}
+      creator="FreelancerAI"
     >
       <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: themeColor }]}>
-          <View style={styles.headerContent}>
-            <View>
-              {data.businessLogo && (
+        
+        {/* HEADER */}
+        <View style={styles.headerSection}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {data.businessLogo && (
+              <View style={styles.logoContainer}>
                 <Image src={data.businessLogo} style={styles.logo} />
+              </View>
+            )}
+            <View>
+              <Text style={styles.businessName}>{data.businessName || 'Business Name'}</Text>
+              {data.businessAddress && (
+                <Text style={[styles.addressText, { maxWidth: 200 }]}>{data.businessAddress}</Text>
               )}
-              <Text style={styles.companyName}>
-                {data.businessName || 'Your Business'}
-              </Text>
+               {data.businessCustomFields.map((field) => (
+                <View key={field.id} style={styles.cfRow}>
+                  <Text style={styles.cfLabel}>{field.label}:</Text>
+                  <Text style={styles.cfValue}>{field.value}</Text>
+                </View>
+              ))}
             </View>
-            <View style={styles.invoiceAmount}>
-              <Text style={styles.amountLabel}>Invoice of ({data.currency})</Text>
-              <Text style={styles.amountValue}>
+          </View>
+          <Text style={styles.headerLabel}>INVOICE</Text>
+        </View>
+
+        {/* META DATA BAR - Horizontal Strip */}
+        <View style={[styles.metaBar, { borderLeftColor: themeColor }]}>
+          <View style={styles.metaGroup}>
+            <Text style={styles.metaLabel}>Invoice No.</Text>
+            <Text style={styles.metaValue}>#{data.invoiceNumber}</Text>
+          </View>
+          <View style={styles.metaGroup}>
+            <Text style={styles.metaLabel}>Date Issued</Text>
+            <Text style={styles.metaValue}>
+              {new Date(data.invoiceDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Text>
+          </View>
+          <View style={styles.metaGroup}>
+            <Text style={styles.metaLabel}>Due Date</Text>
+            <Text style={styles.metaValue}>
+              {new Date(data.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Text>
+          </View>
+          <View style={[styles.metaGroup, { alignItems: 'flex-end' }]}>
+            <Text style={styles.metaLabel}>Amount Due</Text>
+            <Text style={[styles.metaValue, { color: themeColor, fontSize: 11 }]}>
+              {currencySymbol}{data.total.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        {/* ADDRESSES - Clean 2 Col */}
+        <View style={styles.addressGrid}>
+          <View style={styles.addressCol}>
+            <Text style={styles.sectionTitle}>Bill To</Text>
+            <Text style={styles.clientName}>{data.clientName || 'Client Name'}</Text>
+            {data.clientAddress && (
+              <Text style={styles.addressText}>{data.clientAddress}</Text>
+            )}
+             {data.clientCustomFields.map((field) => (
+                <View key={field.id} style={styles.cfRow}>
+                  <Text style={styles.cfLabel}>{field.label}:</Text>
+                  <Text style={styles.cfValue}>{field.value}</Text>
+                </View>
+              ))}
+          </View>
+          {/* Right column could be used for specific shipping info or extra details if needed, 
+              but for now we keep it clean or put "Payment Terms" here? */}
+          <View style={styles.addressCol}>
+             {data.paymentTerms && (
+               <View>
+                 <Text style={styles.sectionTitle}>Payment Terms</Text>
+                 <Text style={styles.addressText}>{data.paymentTerms}</Text>
+               </View>
+             )}
+          </View>
+        </View>
+
+        {/* TABLE */}
+        <View style={styles.tableContainer}>
+          {/* Header */}
+          <View style={styles.tableHeader}>
+            <Text style={[styles.th, styles.colDesc]}>Description</Text>
+            <Text style={[styles.th, styles.colQty]}>Qty</Text>
+            <Text style={[styles.th, styles.colRate]}>Rate</Text>
+            <Text style={[styles.th, styles.colTotal]}>Amount</Text>
+          </View>
+
+          {/* Body */}
+          {data.items.map((item) => (
+            <View key={item.id} style={styles.tableRow}>
+              <View style={styles.colDesc}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                {item.description && <Text style={styles.itemDesc}>{item.description}</Text>}
+              </View>
+              <Text style={[styles.cellText, styles.colQty]}>{item.quantity}</Text>
+              <Text style={[styles.cellText, styles.colRate]}>{currencySymbol}{item.rate.toFixed(2)}</Text>
+              <Text style={[styles.cellText, styles.colTotal]}>{currencySymbol}{item.amount.toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* BOTTOM SECTION: NOTES + TOTALS */}
+        <View style={styles.bottomSection}>
+          {/* Left: Notes & Terms */}
+          <View style={styles.notesArea}>
+            {(data.notes || data.terms || data.paymentCustomFields.length > 0) && (
+              <View>
+                {data.notes && (
+                  <View>
+                    <Text style={styles.noteTitle}>Notes</Text>
+                    <Text style={styles.noteText}>{data.notes}</Text>
+                  </View>
+                )}
+                 {data.terms && (
+                  <View>
+                    <Text style={styles.noteTitle}>Terms & Conditions</Text>
+                    <Text style={styles.noteText}>{data.terms}</Text>
+                  </View>
+                )}
+                 {data.paymentCustomFields.map((field) => (
+                    <View key={field.id} style={styles.cfRow}>
+                      <Text style={[styles.cfLabel, { fontSize: 8 }]}>{field.label}:</Text>
+                      <Text style={[styles.cfValue, { fontSize: 8 }]}>{field.value}</Text>
+                    </View>
+                  ))}
+              </View>
+            )}
+          </View>
+
+          {/* Right: Totals */}
+          <View style={styles.totalsArea}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>{currencySymbol}{data.subtotal.toFixed(2)}</Text>
+            </View>
+            
+            {data.billingDetails.map((detail) => {
+              const amount = detail.type === 'percentage'
+                ? (data.subtotal * detail.value) / 100
+                : detail.value;
+              const displayValue = detail.type === 'percentage'
+                ? `(${detail.value}%)`
+                : '';
+              return (
+                <View key={detail.id} style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>{detail.label} {displayValue}</Text>
+                  <Text style={styles.summaryValue}>
+                    {amount >= 0 ? '' : '-'}{currencySymbol}{Math.abs(amount).toFixed(2)}
+                  </Text>
+                </View>
+              );
+            })}
+
+            <View style={styles.grandTotal}>
+              <Text style={styles.grandTotalLabel}>Total Due</Text>
+              <Text style={[styles.grandTotalValue, { color: themeColor }]}>
                 {currencySymbol}{data.total.toFixed(2)}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Body */}
-        <View style={styles.body}>
-          {/* Billing Information */}
-          <View style={styles.billingSection}>
-            <View style={styles.billingBlock}>
-              <Text style={styles.sectionTitle}>From</Text>
-              <Text style={styles.billingName}>
-                {data.businessName || 'Your Business'}
-              </Text>
-              {data.businessAddress && (
-                <Text style={styles.billingText}>{data.businessAddress}</Text>
-              )}
-              {data.businessCustomFields.map((field) => (
-                <View key={field.id} style={styles.customField}>
-                  <Text style={styles.customFieldLabel}>{field.label}:</Text>
-                  <Text style={styles.customFieldValue}>{field.value}</Text>
-                </View>
-              ))}
-            </View>
-            <View style={styles.billingBlock}>
-              <Text style={styles.sectionTitle}>Billed To</Text>
-              <Text style={styles.billingName}>
-                {data.clientName || 'Client Name'}
-              </Text>
-              {data.clientAddress && (
-                <Text style={styles.billingText}>{data.clientAddress}</Text>
-              )}
-              {data.clientCustomFields.map((field) => (
-                <View key={field.id} style={styles.customField}>
-                  <Text style={styles.customFieldLabel}>{field.label}:</Text>
-                  <Text style={styles.customFieldValue}>{field.value}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Meta Information */}
-          <View style={styles.metaGrid}>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Invoice Number</Text>
-              <Text style={styles.metaValue}>{data.invoiceNumber}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Invoice Date</Text>
-              <Text style={styles.metaValue}>
-                {new Date(data.invoiceDate).toLocaleDateString('en-US', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Due Date</Text>
-              <Text style={styles.metaValue}>
-                {new Date(data.dueDate).toLocaleDateString('en-US', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </Text>
-            </View>
-            {data.paymentTerms && (
-              <View style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Payment Terms</Text>
-                <Text style={styles.metaValue}>{data.paymentTerms}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Notes */}
-          {data.notes && (
-            <View style={[styles.notesSection, {
-              borderLeft: `3px solid ${themeColor}`,
-              backgroundColor: `${themeColor}14` // 14 is hex for ~8% opacity
-            }]}>
-              <Text style={styles.notesTitle}>Notes</Text>
-              <Text style={styles.notesText}>{data.notes}</Text>
-            </View>
-          )}
-
-          {/* Items Table */}
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { flex: 3 }]}>
-                Item Detail
-              </Text>
-              <Text style={[styles.tableHeaderText, styles.tableCellQty]}>
-                QTY
-              </Text>
-              <Text style={[styles.tableHeaderText, styles.tableCellRate]}>
-                Rate
-              </Text>
-              <Text style={[styles.tableHeaderText, styles.tableCellAmount]}>
-                Amount
-              </Text>
-            </View>
-            {data.items.map((item) => (
-              <View key={item.id} style={styles.tableRow}>
-                <View style={styles.itemDetail}>
-                  <Text style={styles.itemName}>{item.name || 'Unnamed Item'}</Text>
-                  {item.description && (
-                    <Text style={styles.itemDescription}>{item.description}</Text>
-                  )}
-                </View>
-                <Text style={[styles.tableCell, styles.tableCellQty]}>
-                  {item.quantity}
-                </Text>
-                <Text style={[styles.tableCell, styles.tableCellRate]}>
-                  {currencySymbol}{item.rate.toFixed(2)}
-                </Text>
-                <Text style={[styles.tableCell, styles.tableCellAmount]}>
-                  {currencySymbol}{item.amount.toFixed(2)}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Totals */}
-          <View style={styles.totalsSection}>
-            <View style={styles.totalsContent}>
-              <View style={[styles.totalRow, styles.totalRowSubtotal]}>
-                <Text>Subtotal</Text>
-                <Text>{currencySymbol}{data.subtotal.toFixed(2)}</Text>
-              </View>
-              {data.billingDetails.map((detail) => {
-                const amount = detail.type === 'percentage'
-                  ? (data.subtotal * detail.value) / 100
-                  : detail.value;
-                const displayValue = detail.type === 'percentage'
-                  ? `${detail.value}%`
-                  : '';
-                return (
-                  <View key={detail.id} style={styles.totalRow}>
-                    <Text>{detail.label} {displayValue}</Text>
-                    <Text>
-                      {amount >= 0 ? '' : '-'}{currencySymbol}{Math.abs(amount).toFixed(2)}
-                    </Text>
-                  </View>
-                );
-              })}
-              <View style={[styles.totalRow, styles.totalRowGrand, { borderTopColor: themeColor }]}>
-                <Text>Total</Text>
-                <Text>{currencySymbol}{data.total.toFixed(2)}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Footer */}
+        {/* FOOTER / SIGNATURE */}
         <View style={styles.footer}>
-          {data.businessSignature && (
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Image src={data.businessSignature} style={styles.signature} />
-              <Text style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
-                Authorized Signature
-              </Text>
-            </View>
-          )}
-          <View style={styles.footerCenter}>
-            <Text style={[styles.footerTitle, { color: themeColor }]}>
-              Thanks for the business.
-            </Text>
-            <Text style={styles.footerText}>
-              Date:{' '}
-              {new Date(data.invoiceDate).toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })}{' '}
-              | Due Date:{' '}
-              {new Date(data.dueDate).toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
-          {data.paymentCustomFields.length > 0 && (
-            <View style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #e5e7eb' }}>
-              <Text style={styles.termsTitle}>Additional Information</Text>
-              {data.paymentCustomFields.map((field) => (
-                <View key={field.id} style={styles.customField}>
-                  <Text style={styles.customFieldLabel}>{field.label}:</Text>
-                  <Text style={styles.customFieldValue}>{field.value}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-          {data.terms && (
-            <View style={styles.termsSection}>
-              <Text style={styles.termsTitle}>Terms & Conditions</Text>
-              <Text style={styles.termsText}>{data.terms}</Text>
-            </View>
-          )}
+           <View style={styles.signatureBox}>
+             {data.businessSignature && (
+               <Image src={data.businessSignature} style={styles.signatureImg} />
+             )}
+             {(data.businessSignature) && (
+               <View style={styles.signatureLine}>
+                 <Text style={styles.sigText}>Authorized Signature</Text>
+               </View>
+             )}
+           </View>
+           <Text style={styles.thankYouMsg}>Thank you for your business</Text>
         </View>
+
       </Page>
     </Document>
   );
